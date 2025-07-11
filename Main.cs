@@ -2,402 +2,505 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace FertilizerCalculator
+namespace NutrientSolutionCalculator
 {
-    // Clase para representar un fertilizante
     public class Fertilizer
     {
         public string Name { get; set; }
-        public double Purity { get; set; } // %P
-        public double MolecularWeight { get; set; } // Peso molecular
-        public double ElementWeight { get; set; } // Peso del elemento
+        public double Purity { get; set; } // %
+        public double MolecularWeight { get; set; }
+        public Dictionary<string, double> Elements { get; set; } = new Dictionary<string, double>();
         public double Solubility { get; set; } // mg/L
-        public double MillimolarSolubility { get; set; } // mmol/L
+        public double Cost { get; set; } // costo por kg
         
-        // Concentraciones de cationes y aniones por unidad de fertilizante
+        public Fertilizer(string name, double purity, double molecularWeight)
+        {
+            Name = name;
+            Purity = purity;
+            MolecularWeight = molecularWeight;
+        }
+    }
+
+    public class WaterAnalysis
+    {
+        public Dictionary<string, double> Elements_mgL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> Elements_mmolL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> Elements_meqL { get; set; } = new Dictionary<string, double>();
+        public double pH { get; set; }
+        public double EC { get; set; }
+        public double HCO3 { get; set; }
+    }
+
+    public class FertilizerResult
+    {
+        public string Name { get; set; }
+        public double Purity { get; set; }
+        public double MolecularWeight { get; set; }
+        public double Elem1MolWeight { get; set; }
+        public double Elem2MolWeight { get; set; }
+        public double SaltConcentration_mgL { get; set; }
+        public double SaltConcentration_mmolL { get; set; }
+        
+        // Cationes (mg/L)
         public double Ca { get; set; }
         public double K { get; set; }
         public double Mg { get; set; }
         public double Na { get; set; }
         public double NH4 { get; set; }
-        public double NO3 { get; set; }
-        public double N { get; set; }
-        public double SO4 { get; set; }
-        public double S { get; set; }
+        
+        // Aniones (mg/L)
+        public double NO3_N { get; set; }
+        public double SO4_S { get; set; }
         public double Cl { get; set; }
-        public double H2PO4 { get; set; }
-        public double P { get; set; }
+        public double H2PO4_P { get; set; }
         public double HCO3 { get; set; }
+        
+        public double SumAnions { get; set; }
+        public double CE { get; set; }
     }
 
-    // Clase para representar la concentración deseada
-    public class DesiredConcentration
+    public class IonBalance
     {
-        public double Ca { get; set; }
-        public double K { get; set; }
-        public double Mg { get; set; }
-        public double Na { get; set; }
-        public double NH4 { get; set; }
-        public double NO3 { get; set; }
-        public double N { get; set; }
-        public double SO4 { get; set; }
-        public double S { get; set; }
-        public double Cl { get; set; }
-        public double H2PO4 { get; set; }
-        public double P { get; set; }
-        public double HCO3 { get; set; }
+        public Dictionary<string, double> Aporte_mgL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> Aporte_mmolL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> Aporte_meqL { get; set; } = new Dictionary<string, double>();
+        
+        public Dictionary<string, double> Agua_mgL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> Agua_mmolL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> Agua_meqL { get; set; } = new Dictionary<string, double>();
+        
+        public Dictionary<string, double> Final_mgL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> Final_mmolL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> Final_meqL { get; set; } = new Dictionary<string, double>();
     }
 
-    // Clase para representar el aporte de iones del agua
-    public class WaterIons
+    public class ElementData
     {
-        public double Ca { get; set; }
-        public double K { get; set; }
-        public double Mg { get; set; }
-        public double Na { get; set; }
-        public double NH4 { get; set; }
-        public double NO3 { get; set; }
-        public double N { get; set; }
-        public double SO4 { get; set; }
-        public double S { get; set; }
-        public double Cl { get; set; }
-        public double H2PO4 { get; set; }
-        public double P { get; set; }
-        public double HCO3 { get; set; }
+        public double AtomicWeight { get; set; }
+        public int Valence { get; set; }
+        public bool IsCation { get; set; }
     }
 
-    // Clase para el resultado del cálculo
-    public class CalculationResult
-    {
-        public string FertilizerName { get; set; }
-        public double RequiredAmount { get; set; } // mg/L
-        public double RequiredMmol { get; set; } // mmol/L
-        public Dictionary<string, double> IonContribution { get; set; }
-    }
-
-    public class FertilizerCalculator
+    public class NutrientCalculatorAdvanced
     {
         private List<Fertilizer> fertilizers;
-        private WaterIons waterIons;
+        private WaterAnalysis waterAnalysis;
+        private Dictionary<string, double> targetConcentrations;
+        private Dictionary<string, ElementData> elementData;
 
-        public FertilizerCalculator()
+        public NutrientCalculatorAdvanced()
         {
             InitializeFertilizers();
+            InitializeElementData();
+            targetConcentrations = new Dictionary<string, double>();
+            waterAnalysis = new WaterAnalysis();
+        }
+
+        private void InitializeElementData()
+        {
+            elementData = new Dictionary<string, ElementData>
+            {
+                ["Ca"] = new ElementData { AtomicWeight = 40.08, Valence = 2, IsCation = true },
+                ["K"] = new ElementData { AtomicWeight = 39.10, Valence = 1, IsCation = true },
+                ["Mg"] = new ElementData { AtomicWeight = 24.31, Valence = 2, IsCation = true },
+                ["Na"] = new ElementData { AtomicWeight = 22.99, Valence = 1, IsCation = true },
+                ["NH4"] = new ElementData { AtomicWeight = 18.04, Valence = 1, IsCation = true },
+                ["N"] = new ElementData { AtomicWeight = 14.01, Valence = 1, IsCation = false },
+                ["S"] = new ElementData { AtomicWeight = 32.06, Valence = 2, IsCation = false },
+                ["P"] = new ElementData { AtomicWeight = 30.97, Valence = 1, IsCation = false },
+                ["Cl"] = new ElementData { AtomicWeight = 35.45, Valence = 1, IsCation = false }
+            };
         }
 
         private void InitializeFertilizers()
         {
-            fertilizers = new List<Fertilizer>
-            {
-                new Fertilizer
-                {
-                    Name = "Ácido nítrico",
-                    Purity = 63,
-                    MolecularWeight = 63.00,
-                    ElementWeight = 61.02,
-                    Solubility = 46.4,
-                    MillimolarSolubility = 0,
-                    NO3 = 28.3,
-                    N = 6.39
-                },
-                new Fertilizer
-                {
-                    Name = "KH2PO4",
-                    Purity = 100,
-                    MolecularWeight = 136.1,
-                    ElementWeight = 97,
-                    Solubility = 100,
-                    MillimolarSolubility = 1.321,
-                    K = 51.71,
-                    H2PO4 = 126.3,
-                    P = 41
-                },
-                new Fertilizer
-                {
-                    Name = "Ca(NO3)2.2H2O",
-                    Purity = 100,
-                    MolecularWeight = 200,
-                    ElementWeight = 40.08,
-                    Solubility = 810,
-                    MillimolarSolubility = 4.050,
-                    Ca = 162,
-                    NO3 = 502,
-                    N = 114
-                },
-                new Fertilizer
-                {
-                    Name = "KNO3",
-                    Purity = 100,
-                    MolecularWeight = 101.1,
-                    ElementWeight = 39.1,
-                    Solubility = 267,
-                    MillimolarSolubility = 2.641,
-                    K = 103,
-                    NO3 = 164,
-                    N = 37
-                },
-                new Fertilizer
-                {
-                    Name = "K2SO4",
-                    Purity = 100,
-                    MolecularWeight = 174.3,
-                    ElementWeight = 78.2,
-                    Solubility = 178,
-                    MillimolarSolubility = 1.021,
-                    K = 80,
-                    SO4 = 93,
-                    S = 33
-                },
-                new Fertilizer
-                {
-                    Name = "MgSO4.7H2O",
-                    Purity = 100,
-                    MolecularWeight = 246.3,
-                    ElementWeight = 24.31,
-                    Solubility = 485,
-                    MillimolarSolubility = 1.969,
-                    Mg = 48,
-                    SO4 = 159,
-                    S = 63
-                }
-            };
+            fertilizers = new List<Fertilizer>();
+
+            // Ácido nítrico
+            var nitricAcid = new Fertilizer("Ácido nítrico", 65, 62.00);
+            nitricAcid.Elements["N"] = 14.01;
+            fertilizers.Add(nitricAcid);
+
+            // KH2PO4
+            var kh2po4 = new Fertilizer("KH2PO4", 98, 136.19);
+            kh2po4.Elements["K"] = 39.10;
+            kh2po4.Elements["P"] = 30.97;
+            fertilizers.Add(kh2po4);
+
+            // Ca(NO3)2.2H2O
+            var caNO3 = new Fertilizer("Ca(NO3)2.2H2O", 95, 200);
+            caNO3.Elements["Ca"] = 40.08;
+            caNO3.Elements["N"] = 28.01; // 2 átomos de N
+            fertilizers.Add(caNO3);
+
+            // KNO3
+            var kno3 = new Fertilizer("KNO3", 98, 101.13);
+            kno3.Elements["K"] = 39.10;
+            kno3.Elements["N"] = 14.01;
+            fertilizers.Add(kno3);
+
+            // K2SO4
+            var k2so4 = new Fertilizer("K2SO4", 98, 174.37);
+            k2so4.Elements["K"] = 78.20; // 2 átomos de K
+            k2so4.Elements["S"] = 32.06;
+            fertilizers.Add(k2so4);
+
+            // MgSO4.7H2O
+            var mgso4 = new Fertilizer("MgSO4.7H2O", 98, 246.32);
+            mgso4.Elements["Mg"] = 24.31;
+            mgso4.Elements["S"] = 32.06;
+            fertilizers.Add(mgso4);
         }
 
-        public void SetWaterIons(WaterIons ions)
+        public void GetUserInput()
         {
-            waterIons = ions;
+            Console.WriteLine("=== CALCULADORA DE SOLUCIÓN NUTRITIVA ===\n");
+            
+            Console.WriteLine("Ingrese las concentraciones deseadas (mg/L):");
+            
+            string[] elements = { "Ca", "K", "Mg", "N", "P", "S" };
+            
+            foreach (string element in elements)
+            {
+                Console.Write($"{element}: ");
+                if (double.TryParse(Console.ReadLine(), out double concentration))
+                {
+                    targetConcentrations[element] = concentration;
+                }
+                else
+                {
+                    Console.WriteLine("Valor inválido, se usará 0");
+                    targetConcentrations[element] = 0;
+                }
+            }
+
+            // Datos del agua (simplificado para el ejemplo)
+            Console.WriteLine("\nIngrese datos del agua (mg/L) - presione Enter para usar valores por defecto:");
+            
+            Console.Write("Ca en agua (default: 10): ");
+            string input = Console.ReadLine();
+            waterAnalysis.Elements_mgL["Ca"] = string.IsNullOrEmpty(input) ? 10 : double.Parse(input);
+            
+            Console.Write("K en agua (default: 2): ");
+            input = Console.ReadLine();
+            waterAnalysis.Elements_mgL["K"] = string.IsNullOrEmpty(input) ? 2 : double.Parse(input);
+            
+            Console.Write("Mg en agua (default: 5): ");
+            input = Console.ReadLine();
+            waterAnalysis.Elements_mgL["Mg"] = string.IsNullOrEmpty(input) ? 5 : double.Parse(input);
+
+            // Calcular mmol/L y meq/L para el agua
+            foreach (var element in waterAnalysis.Elements_mgL)
+            {
+                if (elementData.ContainsKey(element.Key))
+                {
+                    waterAnalysis.Elements_mmolL[element.Key] = element.Value / elementData[element.Key].AtomicWeight;
+                    waterAnalysis.Elements_meqL[element.Key] = waterAnalysis.Elements_mmolL[element.Key] * elementData[element.Key].Valence;
+                }
+            }
         }
 
-        // Método principal para calcular fertilizantes
-        public List<CalculationResult> CalculateFertilizers(DesiredConcentration desired)
+        public List<FertilizerResult> CalculateSolution()
         {
-            var results = new List<CalculationResult>();
+            var results = new List<FertilizerResult>();
+            var remainingNutrients = new Dictionary<string, double>();
 
-            // Calcular iones faltantes (deseados - aporte del agua)
-            var neededIons = new DesiredConcentration
+            // Calcular nutrientes faltantes
+            foreach (var target in targetConcentrations)
             {
-                Ca = Math.Max(0, desired.Ca - (waterIons?.Ca ?? 0)),
-                K = Math.Max(0, desired.K - (waterIons?.K ?? 0)),
-                Mg = Math.Max(0, desired.Mg - (waterIons?.Mg ?? 0)),
-                Na = Math.Max(0, desired.Na - (waterIons?.Na ?? 0)),
-                NH4 = Math.Max(0, desired.NH4 - (waterIons?.NH4 ?? 0)),
-                NO3 = Math.Max(0, desired.NO3 - (waterIons?.NO3 ?? 0)),
-                N = Math.Max(0, desired.N - (waterIons?.N ?? 0)),
-                SO4 = Math.Max(0, desired.SO4 - (waterIons?.SO4 ?? 0)),
-                S = Math.Max(0, desired.S - (waterIons?.S ?? 0)),
-                Cl = Math.Max(0, desired.Cl - (waterIons?.Cl ?? 0)),
-                H2PO4 = Math.Max(0, desired.H2PO4 - (waterIons?.H2PO4 ?? 0)),
-                P = Math.Max(0, desired.P - (waterIons?.P ?? 0)),
-                HCO3 = Math.Max(0, desired.HCO3 - (waterIons?.HCO3 ?? 0))
-            };
+                double waterContent = waterAnalysis.Elements_mgL.ContainsKey(target.Key) 
+                    ? waterAnalysis.Elements_mgL[target.Key] : 0;
+                remainingNutrients[target.Key] = Math.Max(0, target.Value - waterContent);
+            }
 
-            // Algoritmo de optimización simple para cada fertilizante
-            foreach (var fertilizer in fertilizers)
+            // Secuencia de cálculo como en el Excel
+            
+            // 1. KH2PO4 para fósforo
+            if (remainingNutrients.ContainsKey("P") && remainingNutrients["P"] > 0)
             {
-                var result = CalculateFertilizerAmount(fertilizer, neededIons);
-                if (result.RequiredAmount > 0)
-                {
-                    results.Add(result);
-                }
+                var result = CalculateFertilizer("KH2PO4", "P", remainingNutrients["P"]);
+                results.Add(result);
+                
+                // Actualizar K restante
+                double kFromPhosphate = result.K;
+                if (remainingNutrients.ContainsKey("K"))
+                    remainingNutrients["K"] = Math.Max(0, remainingNutrients["K"] - kFromPhosphate);
+            }
+
+            // 2. Ca(NO3)2.2H2O para calcio
+            if (remainingNutrients.ContainsKey("Ca") && remainingNutrients["Ca"] > 0)
+            {
+                var result = CalculateFertilizer("Ca(NO3)2.2H2O", "Ca", remainingNutrients["Ca"]);
+                results.Add(result);
+                
+                // Actualizar N restante
+                double nFromCalcium = result.NO3_N;
+                if (remainingNutrients.ContainsKey("N"))
+                    remainingNutrients["N"] = Math.Max(0, remainingNutrients["N"] - nFromCalcium);
+            }
+
+            // 3. MgSO4.7H2O para magnesio
+            if (remainingNutrients.ContainsKey("Mg") && remainingNutrients["Mg"] > 0)
+            {
+                var result = CalculateFertilizer("MgSO4.7H2O", "Mg", remainingNutrients["Mg"]);
+                results.Add(result);
+                
+                // Actualizar S restante
+                double sFromMagnesium = result.SO4_S;
+                if (remainingNutrients.ContainsKey("S"))
+                    remainingNutrients["S"] = Math.Max(0, remainingNutrients["S"] - sFromMagnesium);
+            }
+
+            // 4. KNO3 para nitrógeno restante
+            if (remainingNutrients.ContainsKey("N") && remainingNutrients["N"] > 0)
+            {
+                var result = CalculateFertilizer("KNO3", "N", remainingNutrients["N"]);
+                results.Add(result);
+                
+                // Actualizar K restante
+                double kFromNitrate = result.K;
+                if (remainingNutrients.ContainsKey("K"))
+                    remainingNutrients["K"] = Math.Max(0, remainingNutrients["K"] - kFromNitrate);
+            }
+
+            // 5. K2SO4 para potasio restante
+            if (remainingNutrients.ContainsKey("K") && remainingNutrients["K"] > 0)
+            {
+                var result = CalculateFertilizer("K2SO4", "K", remainingNutrients["K"]);
+                results.Add(result);
             }
 
             return results;
         }
 
-        private CalculationResult CalculateFertilizerAmount(Fertilizer fertilizer, DesiredConcentration needed)
+        private FertilizerResult CalculateFertilizer(string fertilizerName, string targetElement, double targetAmount)
         {
-            var result = new CalculationResult
+            var fertilizer = fertilizers.First(f => f.Name == fertilizerName);
+            var result = new FertilizerResult
             {
-                FertilizerName = fertilizer.Name,
-                IonContribution = new Dictionary<string, double>()
+                Name = fertilizerName,
+                Purity = fertilizer.Purity,
+                MolecularWeight = fertilizer.MolecularWeight
             };
 
-            // Determinar cuál ion es el limitante para este fertilizante
-            double requiredAmount = 0;
-            string limitingIon = "";
+            // Calcular concentración de sal necesaria
+            // Fórmula: Concentración_sal = target_mg/L × PM_sal × 100 / (PM_elemento × pureza%)
+            double elementMolWeight = fertilizer.Elements[targetElement];
+            result.SaltConcentration_mgL = targetAmount * fertilizer.MolecularWeight * 100 / 
+                                          (elementMolWeight * fertilizer.Purity);
+            
+            result.SaltConcentration_mmolL = result.SaltConcentration_mgL / fertilizer.MolecularWeight;
 
-            // Buscar el ion que requiere más cantidad del fertilizante
-            var ionRequirements = new Dictionary<string, double>();
-
-            if (fertilizer.Ca > 0 && needed.Ca > 0)
-                ionRequirements["Ca"] = needed.Ca / fertilizer.Ca;
-            if (fertilizer.K > 0 && needed.K > 0)
-                ionRequirements["K"] = needed.K / fertilizer.K;
-            if (fertilizer.Mg > 0 && needed.Mg > 0)
-                ionRequirements["Mg"] = needed.Mg / fertilizer.Mg;
-            if (fertilizer.Na > 0 && needed.Na > 0)
-                ionRequirements["Na"] = needed.Na / fertilizer.Na;
-            if (fertilizer.NH4 > 0 && needed.NH4 > 0)
-                ionRequirements["NH4"] = needed.NH4 / fertilizer.NH4;
-            if (fertilizer.NO3 > 0 && needed.NO3 > 0)
-                ionRequirements["NO3"] = needed.NO3 / fertilizer.NO3;
-            if (fertilizer.N > 0 && needed.N > 0)
-                ionRequirements["N"] = needed.N / fertilizer.N;
-            if (fertilizer.SO4 > 0 && needed.SO4 > 0)
-                ionRequirements["SO4"] = needed.SO4 / fertilizer.SO4;
-            if (fertilizer.S > 0 && needed.S > 0)
-                ionRequirements["S"] = needed.S / fertilizer.S;
-            if (fertilizer.Cl > 0 && needed.Cl > 0)
-                ionRequirements["Cl"] = needed.Cl / fertilizer.Cl;
-            if (fertilizer.H2PO4 > 0 && needed.H2PO4 > 0)
-                ionRequirements["H2PO4"] = needed.H2PO4 / fertilizer.H2PO4;
-            if (fertilizer.P > 0 && needed.P > 0)
-                ionRequirements["P"] = needed.P / fertilizer.P;
-            if (fertilizer.HCO3 > 0 && needed.HCO3 > 0)
-                ionRequirements["HCO3"] = needed.HCO3 / fertilizer.HCO3;
-
-            if (ionRequirements.Count > 0)
+            // Calcular aportes de cada elemento
+            switch (fertilizerName)
             {
-                // Tomar el ion que requiere menos cantidad (más restrictivo)
-                var minRequirement = ionRequirements.OrderBy(kvp => kvp.Value).First();
-                requiredAmount = minRequirement.Value;
-                limitingIon = minRequirement.Key;
+                case "KH2PO4":
+                    result.Elem1MolWeight = 39.10; // K
+                    result.Elem2MolWeight = 30.97; // P
+                    result.K = CalculateElementContribution(result.SaltConcentration_mgL, fertilizer.MolecularWeight, 39.10, fertilizer.Purity);
+                    result.H2PO4_P = targetAmount;
+                    break;
+                    
+                case "Ca(NO3)2.2H2O":
+                    result.Elem1MolWeight = 40.08; // Ca
+                    result.Elem2MolWeight = 28.01; // 2N
+                    result.Ca = targetAmount;
+                    result.NO3_N = CalculateElementContribution(result.SaltConcentration_mgL, fertilizer.MolecularWeight, 28.01, fertilizer.Purity);
+                    break;
+                    
+                case "MgSO4.7H2O":
+                    result.Elem1MolWeight = 24.31; // Mg
+                    result.Elem2MolWeight = 32.06; // S
+                    result.Mg = targetAmount;
+                    result.SO4_S = CalculateElementContribution(result.SaltConcentration_mgL, fertilizer.MolecularWeight, 32.06, fertilizer.Purity);
+                    break;
+                    
+                case "KNO3":
+                    result.Elem1MolWeight = 39.10; // K
+                    result.Elem2MolWeight = 14.01; // N
+                    result.K = CalculateElementContribution(result.SaltConcentration_mgL, fertilizer.MolecularWeight, 39.10, fertilizer.Purity);
+                    result.NO3_N = targetAmount;
+                    break;
+                    
+                case "K2SO4":
+                    result.Elem1MolWeight = 78.20; // 2K
+                    result.Elem2MolWeight = 32.06; // S
+                    result.K = targetAmount;
+                    result.SO4_S = CalculateElementContribution(result.SaltConcentration_mgL, fertilizer.MolecularWeight, 32.06, fertilizer.Purity);
+                    break;
             }
-
-            result.RequiredAmount = requiredAmount;
-            result.RequiredMmol = requiredAmount / fertilizer.MolecularWeight * 1000;
-
-            // Calcular la contribución de cada ion
-            result.IonContribution["Ca"] = fertilizer.Ca * requiredAmount;
-            result.IonContribution["K"] = fertilizer.K * requiredAmount;
-            result.IonContribution["Mg"] = fertilizer.Mg * requiredAmount;
-            result.IonContribution["Na"] = fertilizer.Na * requiredAmount;
-            result.IonContribution["NH4"] = fertilizer.NH4 * requiredAmount;
-            result.IonContribution["NO3"] = fertilizer.NO3 * requiredAmount;
-            result.IonContribution["N"] = fertilizer.N * requiredAmount;
-            result.IonContribution["SO4"] = fertilizer.SO4 * requiredAmount;
-            result.IonContribution["S"] = fertilizer.S * requiredAmount;
-            result.IonContribution["Cl"] = fertilizer.Cl * requiredAmount;
-            result.IonContribution["H2PO4"] = fertilizer.H2PO4 * requiredAmount;
-            result.IonContribution["P"] = fertilizer.P * requiredAmount;
-            result.IonContribution["HCO3"] = fertilizer.HCO3 * requiredAmount;
 
             return result;
         }
 
-        // Método para calcular la solución nutritiva completa
-        public void CalculateNutrientSolution(DesiredConcentration desired)
+        private double CalculateElementContribution(double saltConcentration, double saltMolWeight, double elementMolWeight, double purity)
         {
-            var results = CalculateFertilizers(desired);
+            return saltConcentration * elementMolWeight * (purity / 100) / saltMolWeight;
+        }
 
-            Console.WriteLine("=== CÁLCULO DE SOLUCIÓN NUTRITIVA ===\n");
-            Console.WriteLine($"{"Fertilizante",-20} {"Cantidad (mg/L)",-15} {"Cantidad (mmol/L)",-18}");
-            Console.WriteLine(new string('-', 55));
-
-            foreach (var result in results)
-            {
-                Console.WriteLine($"{result.FertilizerName,-20} {result.RequiredAmount,-15:F2} {result.RequiredMmol,-18:F3}");
-            }
-
-            Console.WriteLine("\n=== APORTE DE IONES POR FERTILIZANTE ===\n");
+        public IonBalance CalculateIonBalance(List<FertilizerResult> results)
+        {
+            var balance = new IonBalance();
             
-            foreach (var result in results)
+            // Inicializar diccionarios
+            string[] ions = { "Ca", "K", "Mg", "Na", "NH4", "NO3_N", "SO4_S", "Cl", "H2PO4_P", "HCO3" };
+            
+            foreach (string ion in ions)
             {
-                if (result.RequiredAmount > 0)
+                // Inicializar todos los diccionarios
+                balance.Aporte_mgL[ion] = 0;
+                balance.Aporte_mmolL[ion] = 0;
+                balance.Aporte_meqL[ion] = 0;
+                
+                balance.Agua_mgL[ion] = 0;
+                balance.Agua_mmolL[ion] = 0;
+                balance.Agua_meqL[ion] = 0;
+                
+                balance.Final_mgL[ion] = 0;
+                balance.Final_mmolL[ion] = 0;
+                balance.Final_meqL[ion] = 0;
+                
+                // Asignar valores del agua para elementos básicos
+                string elementKey = ion.Replace("_", "").Replace("NO3", "N").Replace("SO4", "S").Replace("H2PO4", "P");
+                if (waterAnalysis.Elements_mgL.ContainsKey(elementKey))
                 {
-                    Console.WriteLine($"\n{result.FertilizerName} ({result.RequiredAmount:F2} mg/L):");
-                    foreach (var ion in result.IonContribution)
-                    {
-                        if (ion.Value > 0.01)
-                        {
-                            Console.WriteLine($"  {ion.Key}: {ion.Value:F2} mg/L");
-                        }
-                    }
+                    balance.Agua_mgL[ion] = waterAnalysis.Elements_mgL[elementKey];
                 }
             }
 
-            // Calcular totales
-            Console.WriteLine("\n=== CONCENTRACIÓN FINAL TOTAL ===\n");
-            var totalContribution = new Dictionary<string, double>();
-            
+            // Sumar aportes de fertilizantes
             foreach (var result in results)
             {
-                foreach (var ion in result.IonContribution)
+                balance.Aporte_mgL["Ca"] += result.Ca;
+                balance.Aporte_mgL["K"] += result.K;
+                balance.Aporte_mgL["Mg"] += result.Mg;
+                balance.Aporte_mgL["NH4"] += result.NH4;
+                balance.Aporte_mgL["NO3_N"] += result.NO3_N;
+                balance.Aporte_mgL["SO4_S"] += result.SO4_S;
+                balance.Aporte_mgL["H2PO4_P"] += result.H2PO4_P;
+            }
+
+            // Calcular concentraciones finales y conversiones
+            foreach (string ion in ions)
+            {
+                // Final = Aporte + Agua
+                balance.Final_mgL[ion] = balance.Aporte_mgL[ion] + balance.Agua_mgL[ion];
+                
+                // Convertir a mmol/L y meq/L
+                string elementKey = ion.Replace("_", "").Replace("NO3", "N").Replace("SO4", "S").Replace("H2PO4", "P");
+                if (elementData.ContainsKey(elementKey))
                 {
-                    if (!totalContribution.ContainsKey(ion.Key))
-                        totalContribution[ion.Key] = 0;
-                    totalContribution[ion.Key] += ion.Value;
+                    // Para aportes
+                    balance.Aporte_mmolL[ion] = balance.Aporte_mgL[ion] / elementData[elementKey].AtomicWeight;
+                    balance.Aporte_meqL[ion] = balance.Aporte_mmolL[ion] * elementData[elementKey].Valence;
+                    
+                    // Para agua
+                    balance.Agua_mmolL[ion] = balance.Agua_mgL[ion] / elementData[elementKey].AtomicWeight;
+                    balance.Agua_meqL[ion] = balance.Agua_mmolL[ion] * elementData[elementKey].Valence;
+                    
+                    // Para final
+                    balance.Final_mmolL[ion] = balance.Final_mgL[ion] / elementData[elementKey].AtomicWeight;
+                    balance.Final_meqL[ion] = balance.Final_mmolL[ion] * elementData[elementKey].Valence;
                 }
             }
 
-            // Sumar aporte del agua
-            if (waterIons != null)
+            return balance;
+        }
+
+        public void DisplayResults(List<FertilizerResult> results, IonBalance balance)
+        {
+            Console.Clear();
+            Console.WriteLine("=== RESULTADOS DE SOLUCIÓN NUTRITIVA ===\n");
+
+            // Tabla 1: Fertilizantes
+            Console.WriteLine("TABLA 1: FERTILIZANTES");
+            Console.WriteLine(new string('=', 150));
+            Console.WriteLine($"{"FERTILIZANTE",-20} {"P%",-5} {"PM Sal",-8} {"PM E1",-8} {"PM E2",-8} {"mg/L",-10} {"mmol/L",-8} {"Ca",-6} {"K",-6} {"Mg",-6} {"NH4",-6} {"NO3-N",-8} {"SO4-S",-8} {"H2PO4-P",-10}");
+            Console.WriteLine(new string('-', 150));
+
+            foreach (var result in results)
             {
-                totalContribution["Ca"] += waterIons.Ca;
-                totalContribution["K"] += waterIons.K;
-                totalContribution["Mg"] += waterIons.Mg;
-                totalContribution["Na"] += waterIons.Na;
-                totalContribution["NH4"] += waterIons.NH4;
-                totalContribution["NO3"] += waterIons.NO3;
-                totalContribution["N"] += waterIons.N;
-                totalContribution["SO4"] += waterIons.SO4;
-                totalContribution["S"] += waterIons.S;
-                totalContribution["Cl"] += waterIons.Cl;
-                totalContribution["H2PO4"] += waterIons.H2PO4;
-                totalContribution["P"] += waterIons.P;
-                totalContribution["HCO3"] += waterIons.HCO3;
+                Console.WriteLine($"{result.Name,-20} {result.Purity,-5:F0} {result.MolecularWeight,-8:F2} {result.Elem1MolWeight,-8:F2} {result.Elem2MolWeight,-8:F2} " +
+                                $"{result.SaltConcentration_mgL,-10:F2} {result.SaltConcentration_mmolL,-8:F3} {result.Ca,-6:F1} {result.K,-6:F1} {result.Mg,-6:F1} " +
+                                $"{result.NH4,-6:F1} {result.NO3_N,-8:F1} {result.SO4_S,-8:F1} {result.H2PO4_P,-10:F1}");
             }
 
-            Console.WriteLine($"{"Ion",-8} {"Deseado",-10} {"Obtenido",-10} {"Diferencia",-12}");
-            Console.WriteLine(new string('-', 42));
+            Console.WriteLine("\n\nTABLA 2: BALANCE DE IONES");
+            Console.WriteLine(new string('=', 120));
             
-            Console.WriteLine($"{"Ca",-8} {desired.Ca,-10:F2} {totalContribution["Ca"],-10:F2} {totalContribution["Ca"] - desired.Ca,-12:F2}");
-            Console.WriteLine($"{"K",-8} {desired.K,-10:F2} {totalContribution["K"],-10:F2} {totalContribution["K"] - desired.K,-12:F2}");
-            Console.WriteLine($"{"Mg",-8} {desired.Mg,-10:F2} {totalContribution["Mg"],-10:F2} {totalContribution["Mg"] - desired.Mg,-12:F2}");
-            Console.WriteLine($"{"P",-8} {desired.P,-10:F2} {totalContribution["P"],-10:F2} {totalContribution["P"] - desired.P,-12:F2}");
-            Console.WriteLine($"{"N",-8} {desired.N,-10:F2} {totalContribution["N"],-10:F2} {totalContribution["N"] - desired.N,-12:F2}");
-            Console.WriteLine($"{"S",-8} {desired.S,-10:F2} {totalContribution["S"],-10:F2} {totalContribution["S"] - desired.S,-12:F2}");
+            // Encabezados
+            Console.WriteLine($"{"ELEMENTO",-12} {"--- APORTE ---",-30} {"--- AGUA ---",-25} {"--- FINAL ---",-25}");
+            Console.WriteLine($"{"",12} {"mg/L",-8} {"mmol/L",-8} {"meq/L",-8} {"mg/L",-8} {"mmol/L",-8} {"meq/L",-8} {"mg/L",-8} {"mmol/L",-8} {"meq/L",-8}");
+            Console.WriteLine(new string('-', 120));
+
+            // Cationes
+            Console.WriteLine("CATIONES:");
+            string[] cations = { "Ca", "K", "Mg", "Na", "NH4" };
+            foreach (string cation in cations)
+            {
+                Console.WriteLine($"{cation,-12} {balance.Aporte_mgL[cation],-8:F1} {balance.Aporte_mmolL[cation],-8:F2} {balance.Aporte_meqL[cation],-8:F2} " +
+                                $"{balance.Agua_mgL[cation],-8:F1} {balance.Agua_mmolL[cation],-8:F2} {balance.Agua_meqL[cation],-8:F2} " +
+                                $"{balance.Final_mgL[cation],-8:F1} {balance.Final_mmolL[cation],-8:F2} {balance.Final_meqL[cation],-8:F2}");
+            }
+
+            Console.WriteLine("\nANIONES:");
+            string[] anions = { "NO3_N", "SO4_S", "Cl", "H2PO4_P", "HCO3" };
+            foreach (string anion in anions)
+            {
+                Console.WriteLine($"{anion,-12} {balance.Aporte_mgL[anion],-8:F1} {balance.Aporte_mmolL[anion],-8:F2} {balance.Aporte_meqL[anion],-8:F2} " +
+                                $"{balance.Agua_mgL[anion],-8:F1} {balance.Agua_mmolL[anion],-8:F2} {balance.Agua_meqL[anion],-8:F2} " +
+                                $"{balance.Final_mgL[anion],-8:F1} {balance.Final_mmolL[anion],-8:F2} {balance.Final_meqL[anion],-8:F2}");
+            }
+
+            // Verificación vs concentraciones deseadas
+            Console.WriteLine("\n\nVERIFICACIÓN VS CONCENTRACIONES DESEADAS:");
+            Console.WriteLine(new string('=', 60));
+            Console.WriteLine($"{"Elemento",-12} {"Deseado",-12} {"Obtenido",-12} {"Diferencia",-12}");
+            Console.WriteLine(new string('-', 60));
+
+            foreach (var target in targetConcentrations)
+            {
+                string key = target.Key;
+                if (key == "N") key = "NO3_N";
+                if (key == "S") key = "SO4_S";
+                if (key == "P") key = "H2PO4_P";
+                
+                double obtained = 0;
+                if (balance.Final_mgL.ContainsKey(key))
+                {
+                    obtained = balance.Final_mgL[key];
+                }
+                else if (balance.Final_mgL.ContainsKey(target.Key))
+                {
+                    obtained = balance.Final_mgL[target.Key];
+                }
+                
+                double difference = obtained - target.Value;
+                
+                Console.WriteLine($"{target.Key,-12} {target.Value,-12:F1} {obtained,-12:F1} {difference,-12:F1}");
+            }
         }
     }
 
-    // Programa principal de ejemplo
+    // Programa principal
     class Program
     {
         static void Main(string[] args)
         {
-            var calculator = new FertilizerCalculator();
-
-            // Definir el aporte de iones del agua (basado en la imagen 1)
-            var waterIons = new WaterIons
-            {
-                Ca = 162,
-                K = 257,
-                Mg = 46,
-                Na = 0,
-                NH4 = 0,
-                NO3 = 673,
-                N = 152,
-                SO4 = 316,
-                S = 106,
-                Cl = 0,
-                H2PO4 = 145,
-                P = 46,
-                HCO3 = 0
-            };
-
-            calculator.SetWaterIons(waterIons);
-
-            // Definir concentraciones deseadas (ejemplo)
-            var desiredConcentration = new DesiredConcentration
-            {
-                Ca = 200,
-                K = 300,
-                Mg = 60,
-                Na = 10,
-                NH4 = 20,
-                NO3 = 800,
-                N = 180,
-                SO4 = 400,
-                S = 130,
-                Cl = 50,
-                H2PO4 = 200,
-                P = 60,
-                HCO3 = 30
-            };
-
-            // Realizar el cálculo
-            calculator.CalculateNutrientSolution(desiredConcentration);
-
+            var calculator = new NutrientCalculatorAdvanced();
+            
+            // Obtener input del usuario
+            calculator.GetUserInput();
+            
+            // Calcular solución
+            var results = calculator.CalculateSolution();
+            
+            // Calcular balance de iones
+            var balance = calculator.CalculateIonBalance(results);
+            
+            // Mostrar resultados
+            calculator.DisplayResults(results, balance);
+            
             Console.WriteLine("\nPresione cualquier tecla para salir...");
             Console.ReadKey();
         }
