@@ -1,313 +1,314 @@
 using System;
 using System.Collections.Generic;
 #pragma warning disable CS8618
-namespace HydroponicCalculator.Modules
+
+namespace CalculadoraHidroponica.Modulos
 {
-    public class AcidData
+    public class DatosAcido
     {
-        public string Name { get; set; }
-        public double Purity { get; set; } // %
-        public double Density { get; set; } // g/L
-        public double MolecularWeight { get; set; }
-        public int Valence { get; set; }
-        public string ElementProvided { get; set; } // N or P
-        public double ElementMolecularWeight { get; set; }
+        public string Nombre { get; set; }
+        public double Pureza { get; set; } // %
+        public double Densidad { get; set; } // g/L
+        public double PesoMolecular { get; set; }
+        public int Valencia { get; set; }
+        public string ElementoProporcionado { get; set; } // N o P
+        public double PesoMolecularElemento { get; set; }
     }
 
-    public class AcidCalculationResult
+    public class ResultadoCalculoAcido
     {
-        public string AcidName { get; set; }
-        public double AcidVolume_mlL { get; set; } // ml of acid per L of water
-        public double HydrogenConcentration_mgL { get; set; }
-        public double HydrogenConcentration_mmolL { get; set; }
-        public double NutrientContribution_mgL { get; set; } // N or P contributed
-        public string NutrientType { get; set; } // "N" or "P"
-        public double BicarbonatesToNeutralize { get; set; }
-        public double BicarbonatesRemaining { get; set; } = 30.5; // Always leave 30.5 mg/L as buffer
+        public string NombreAcido { get; set; }
+        public double VolumenAcido_mlL { get; set; } // ml de ácido por L de agua
+        public double ConcentracionHidrogeno_mgL { get; set; }
+        public double ConcentracionHidrogeno_mmolL { get; set; }
+        public double ContribucionNutriente_mgL { get; set; } // N o P contribuido
+        public string TipoNutriente { get; set; } // "N" o "P"
+        public double BicarbonatosANeutralizar { get; set; }
+        public double BicarbonatosRestantes { get; set; } = 30.5; // Siempre dejar 30.5 mg/L como buffer
     }
 
-    public class TitrationResult
+    public class ResultadoTitracion
     {
-        public List<TitrationReplication> Replications { get; set; } = new List<TitrationReplication>();
-        public double AverageAcidVolume_mlL { get; set; }
-        public double CalculatedBicarbonates_mgL { get; set; }
-        public double TotalBicarbonates_mgL { get; set; }
+        public List<ReplicaTitracion> Replicas { get; set; } = new List<ReplicaTitracion>();
+        public double VolumenAcidoPromedio_mlL { get; set; }
+        public double BicarbonatosCalculados_mgL { get; set; }
+        public double BicarbonatosTotales_mgL { get; set; }
     }
 
-    public class TitrationReplication
+    public class ReplicaTitracion
     {
-        public int ReplicationNumber { get; set; }
-        public double WaterVolume_L { get; set; }
-        public double InitialPH { get; set; }
-        public double FinalPH { get; set; }
-        public double AcidUsed_ml { get; set; }
-        public double AcidPerLiter_mlL { get; set; }
+        public int NumeroReplica { get; set; }
+        public double VolumenAgua_L { get; set; }
+        public double PHInicial { get; set; }
+        public double PHFinal { get; set; }
+        public double AcidoUsado_ml { get; set; }
+        public double AcidoPorLitro_mlL { get; set; }
     }
 
-    public class PHAdjustmentModule
+    public class ModuloAjustePH
     {
-        private Dictionary<string, AcidData> acids;
-        private const double BUFFER_BICARBONATES = 30.5; // mg/L to leave unneutralized
-        private const double BICARBONATE_THRESHOLD = 122.0; // mg/L (2 mmol/L)
+        private Dictionary<string, DatosAcido> acidos;
+        private const double BICARBONATOS_BUFFER = 30.5; // mg/L para dejar sin neutralizar
+        private const double UMBRAL_BICARBONATOS = 122.0; // mg/L (2 mmol/L)
 
-        public PHAdjustmentModule()
+        public ModuloAjustePH()
         {
-            InitializeAcids();
+            InicializarAcidos();
         }
 
-        private void InitializeAcids()
+        private void InicializarAcidos()
         {
-            acids = new Dictionary<string, AcidData>
+            acidos = new Dictionary<string, DatosAcido>
             {
-                ["HNO3"] = new AcidData
+                ["HNO3"] = new DatosAcido
                 {
-                    Name = "Nitric Acid",
-                    Purity = 65.0,
-                    Density = 1400.0,
-                    MolecularWeight = 63.01,
-                    Valence = 1,
-                    ElementProvided = "N",
-                    ElementMolecularWeight = 14.01
+                    Nombre = "Ácido Nítrico",
+                    Pureza = 65.0,
+                    Densidad = 1400.0,
+                    PesoMolecular = 63.01,
+                    Valencia = 1,
+                    ElementoProporcionado = "N",
+                    PesoMolecularElemento = 14.01
                 },
-                ["H3PO4"] = new AcidData
+                ["H3PO4"] = new DatosAcido
                 {
-                    Name = "Phosphoric Acid",
-                    Purity = 85.0,
-                    Density = 1685.0,
-                    MolecularWeight = 98.00,
-                    Valence = 3,
-                    ElementProvided = "P",
-                    ElementMolecularWeight = 30.97
+                    Nombre = "Ácido Fosfórico",
+                    Pureza = 85.0,
+                    Densidad = 1685.0,
+                    PesoMolecular = 98.00,
+                    Valencia = 3,
+                    ElementoProporcionado = "P",
+                    PesoMolecularElemento = 30.97
                 }
             };
         }
 
-        public string SelectAcidStrategy(double hco3_mgL, double targetP_mgL, double currentP_mgL)
+        public string SeleccionarEstrategiaAcido(double hco3_mgL, double pObjetivo_mgL, double pActual_mgL)
         {
-            double neededP = targetP_mgL - currentP_mgL;
+            double pNecesario = pObjetivo_mgL - pActual_mgL;
 
-            if (hco3_mgL > BICARBONATE_THRESHOLD)
+            if (hco3_mgL > UMBRAL_BICARBONATOS)
             {
-                // High bicarbonates: Use phosphoric acid first, then nitric acid
-                return "TwoStepStrategy";
+                // Bicarbonatos altos: Usar ácido fosfórico primero, luego ácido nítrico
+                return "EstrategiaDosPasos";
             }
             else
             {
-                if (neededP > 0)
+                if (pNecesario > 0)
                 {
-                    // Low bicarbonates but need P: Could use phosphoric acid
-                    return "PhosphoricAcidOption";
+                    // Bicarbonatos bajos pero necesita P: Podría usar ácido fosfórico
+                    return "OpcionAcidoFosforico";
                 }
                 else
                 {
-                    // Low bicarbonates: Use nitric acid only
-                    return "NitricAcidOnly";
+                    // Bicarbonatos bajos: Usar solo ácido nítrico
+                    return "SoloAcidoNitrico";
                 }
             }
         }
 
-        public List<AcidCalculationResult> CalculateAcidRequirement_IncrossiMethod(
+        public List<ResultadoCalculoAcido> CalcularRequerimientoAcido_MetodoIncrossi(
             double hco3_mgL,
-            double targetPH,
-            double targetP_mgL = 0,
-            double currentP_mgL = 0)
+            double pHObjetivo,
+            double pObjetivo_mgL = 0,
+            double pActual_mgL = 0)
         {
-            var results = new List<AcidCalculationResult>();
-            string strategy = SelectAcidStrategy(hco3_mgL, targetP_mgL, currentP_mgL);
+            var resultados = new List<ResultadoCalculoAcido>();
+            string estrategia = SeleccionarEstrategiaAcido(hco3_mgL, pObjetivo_mgL, pActual_mgL);
 
-            switch (strategy)
+            switch (estrategia)
             {
-                case "TwoStepStrategy":
-                    results.AddRange(CalculateTwoStepAcidAdjustment(hco3_mgL, targetPH, targetP_mgL, currentP_mgL));
+                case "EstrategiaDosPasos":
+                    resultados.AddRange(CalcularAjusteAcidoDosPasos(hco3_mgL, pHObjetivo, pObjetivo_mgL, pActual_mgL));
                     break;
 
-                case "PhosphoricAcidOption":
-                    results.Add(CalculateSingleAcidAdjustment("H3PO4", hco3_mgL, targetPH, targetP_mgL, currentP_mgL));
+                case "OpcionAcidoFosforico":
+                    resultados.Add(CalcularAjusteAcidoUnico("H3PO4", hco3_mgL, pHObjetivo, pObjetivo_mgL, pActual_mgL));
                     break;
 
-                case "NitricAcidOnly":
+                case "SoloAcidoNitrico":
                 default:
-                    results.Add(CalculateSingleAcidAdjustment("HNO3", hco3_mgL, targetPH));
+                    resultados.Add(CalcularAjusteAcidoUnico("HNO3", hco3_mgL, pHObjetivo));
                     break;
             }
 
-            return results;
+            return resultados;
         }
 
-        private List<AcidCalculationResult> CalculateTwoStepAcidAdjustment(
+        private List<ResultadoCalculoAcido> CalcularAjusteAcidoDosPasos(
             double hco3_mgL,
-            double targetPH,
-            double targetP_mgL,
-            double currentP_mgL)
+            double pHObjetivo,
+            double pObjetivo_mgL,
+            double pActual_mgL)
         {
-            var results = new List<AcidCalculationResult>();
+            var resultados = new List<ResultadoCalculoAcido>();
 
-            // Step 1: Use phosphoric acid to provide needed P
-            double neededP = targetP_mgL - currentP_mgL;
-            if (neededP > 0)
+            // Paso 1: Usar ácido fosfórico para proporcionar P necesario
+            double pNecesario = pObjetivo_mgL - pActual_mgL;
+            if (pNecesario > 0)
             {
-                var phosphoricResult = CalculatePhosphoricAcidForPhosphorus(neededP);
-                results.Add(phosphoricResult);
+                var resultadoFosforico = CalcularAcidoFosforicoParaFosforo(pNecesario);
+                resultados.Add(resultadoFosforico);
 
-                // Calculate remaining bicarbonates after phosphoric acid
-                double remainingHCO3 = hco3_mgL - phosphoricResult.BicarbonatesToNeutralize;
+                // Calcular bicarbonatos restantes después del ácido fosfórico
+                double hco3Restante = hco3_mgL - resultadoFosforico.BicarbonatosANeutralizar;
 
-                // Step 2: Use nitric acid for remaining bicarbonates
-                if (remainingHCO3 > BUFFER_BICARBONATES)
+                // Paso 2: Usar ácido nítrico para bicarbonatos restantes
+                if (hco3Restante > BICARBONATOS_BUFFER)
                 {
-                    var nitricResult = CalculateSingleAcidAdjustment("HNO3", remainingHCO3, targetPH);
-                    results.Add(nitricResult);
+                    var resultadoNitrico = CalcularAjusteAcidoUnico("HNO3", hco3Restante, pHObjetivo);
+                    resultados.Add(resultadoNitrico);
                 }
             }
             else
             {
-                // If no P needed, just use nitric acid
-                results.Add(CalculateSingleAcidAdjustment("HNO3", hco3_mgL, targetPH));
+                // Si no se necesita P, solo usar ácido nítrico
+                resultados.Add(CalcularAjusteAcidoUnico("HNO3", hco3_mgL, pHObjetivo));
             }
 
-            return results;
+            return resultados;
         }
 
-        private AcidCalculationResult CalculatePhosphoricAcidForPhosphorus(double neededP_mgL)
+        private ResultadoCalculoAcido CalcularAcidoFosforicoParaFosforo(double pNecesario_mgL)
         {
-            var acid = acids["H3PO4"];
+            var acido = acidos["H3PO4"];
 
-            // Calculate acid concentration needed to provide P
-            // Formula: P = Acid_mgL × ElementMW × Purity / AcidMW × 100
-            // Rearranged: Acid_mgL = P × AcidMW × 100 / (ElementMW × Purity)
-            double acidConc_mgL = neededP_mgL * acid.MolecularWeight * 100.0 /
-                                 (acid.ElementMolecularWeight * acid.Purity);
+            // Calcular concentración de ácido necesaria para proporcionar P
+            // Fórmula: P = Acido_mgL × ElementoPM × Pureza / AcidoPM × 100
+            // Reorganizada: Acido_mgL = P × AcidoPM × 100 / (ElementoPM × Pureza)
+            double concentracionAcido_mgL = pNecesario_mgL * acido.PesoMolecular * 100.0 /
+                                         (acido.PesoMolecularElemento * acido.Pureza);
 
-            // Calculate acid volume: Q = AcidConc / (Valence × Density × Purity/100)
-            double acidVolume_mlL = acidConc_mgL / (acid.Valence * acid.Density * (acid.Purity / 100.0));
+            // Calcular volumen de ácido: Q = ConcentracionAcido / (Valencia × Densidad × Pureza/100)
+            double volumenAcido_mlL = concentracionAcido_mgL / (acido.Valencia * acido.Densidad * (acido.Pureza / 100.0));
 
-            // Calculate how much bicarbonate this neutralizes
-            double hNeutralized = acidVolume_mlL * acid.Valence * acid.Density * (acid.Purity / 100.0);
+            // Calcular cuánto bicarbonato neutraliza esto
+            double hNeutralizado = volumenAcido_mlL * acido.Valencia * acido.Densidad * (acido.Pureza / 100.0);
 
-            return new AcidCalculationResult
+            return new ResultadoCalculoAcido
             {
-                AcidName = acid.Name,
-                AcidVolume_mlL = acidVolume_mlL,
-                HydrogenConcentration_mgL = hNeutralized,
-                HydrogenConcentration_mmolL = hNeutralized / acid.MolecularWeight,
-                NutrientContribution_mgL = neededP_mgL,
-                NutrientType = "P",
-                BicarbonatesToNeutralize = hNeutralized,
-                BicarbonatesRemaining = BUFFER_BICARBONATES
+                NombreAcido = acido.Nombre,
+                VolumenAcido_mlL = volumenAcido_mlL,
+                ConcentracionHidrogeno_mgL = hNeutralizado,
+                ConcentracionHidrogeno_mmolL = hNeutralizado / acido.PesoMolecular,
+                ContribucionNutriente_mgL = pNecesario_mgL,
+                TipoNutriente = "P",
+                BicarbonatosANeutralizar = hNeutralizado,
+                BicarbonatosRestantes = BICARBONATOS_BUFFER
             };
         }
 
-        private AcidCalculationResult CalculateSingleAcidAdjustment(
-            string acidType,
+        private ResultadoCalculoAcido CalcularAjusteAcidoUnico(
+            string tipoAcido,
             double hco3_mgL,
-            double targetPH,
-            double targetP_mgL = 0,
-            double currentP_mgL = 0)
+            double pHObjetivo,
+            double pObjetivo_mgL = 0,
+            double pActual_mgL = 0)
         {
-            var acid = acids[acidType];
+            var acido = acidos[tipoAcido];
 
-            // Incrossi Method: H+ = [HCO3-] / (1 + 10^(pH - 6.35))
-            double bicarbonateToNeutralize = Math.Max(0, hco3_mgL - BUFFER_BICARBONATES);
-            double hPlusRequired_mgL = bicarbonateToNeutralize / (1 + Math.Pow(10, targetPH - 6.35));
+            // Método Incrossi: H+ = [HCO3-] / (1 + 10^(pH - 6.35))
+            double bicarbonatoANeutralizar = Math.Max(0, hco3_mgL - BICARBONATOS_BUFFER);
+            double hPlusRequerido_mgL = bicarbonatoANeutralizar / (1 + Math.Pow(10, pHObjetivo - 6.35));
 
-            // Calculate acid volume: Q = H+ × MW / (n × D × P/100)
-            double acidVolume_mlL = hPlusRequired_mgL * acid.MolecularWeight /
-                                   (acid.Valence * acid.Density * (acid.Purity / 100.0));
+            // Calcular volumen de ácido: Q = H+ × PM / (n × D × P/100)
+            double volumenAcido_mlL = hPlusRequerido_mgL * acido.PesoMolecular /
+                                   (acido.Valencia * acido.Densidad * (acido.Pureza / 100.0));
 
-            // Alternative calculation without MW for direct mg/L
-            double acidVolume_mlL_direct = hPlusRequired_mgL /
-                                          (acid.Valence * acid.Density * (acid.Purity / 100.0));
+            // Cálculo alternativo sin PM para mg/L directo
+            double volumenAcido_mlL_directo = hPlusRequerido_mgL /
+                                          (acido.Valencia * acido.Densidad * (acido.Pureza / 100.0));
 
-            // Calculate nutrient contribution if applicable
-            double nutrientContribution = 0;
-            if (acidType == "HNO3")
+            // Calcular contribución de nutriente si aplica
+            double contribucionNutriente = 0;
+            if (tipoAcido == "HNO3")
             {
-                // Calculate N contribution: N = AcidVolume × Density × Purity × ElementMW / AcidMW
-                nutrientContribution = acidVolume_mlL * acid.Density * (acid.Purity / 100.0) *
-                                     acid.ElementMolecularWeight / acid.MolecularWeight;
+                // Calcular contribución de N: N = VolumenAcido × Densidad × Pureza × ElementoPM / AcidoPM
+                contribucionNutriente = volumenAcido_mlL * acido.Densidad * (acido.Pureza / 100.0) *
+                                     acido.PesoMolecularElemento / acido.PesoMolecular;
             }
-            else if (acidType == "H3PO4")
+            else if (tipoAcido == "H3PO4")
             {
-                nutrientContribution = targetP_mgL - currentP_mgL;
+                contribucionNutriente = pObjetivo_mgL - pActual_mgL;
             }
 
-            return new AcidCalculationResult
+            return new ResultadoCalculoAcido
             {
-                AcidName = acid.Name,
-                AcidVolume_mlL = acidVolume_mlL_direct,
-                HydrogenConcentration_mgL = hPlusRequired_mgL,
-                HydrogenConcentration_mmolL = hPlusRequired_mgL / acid.MolecularWeight,
-                NutrientContribution_mgL = nutrientContribution,
-                NutrientType = acid.ElementProvided,
-                BicarbonatesToNeutralize = bicarbonateToNeutralize,
-                BicarbonatesRemaining = BUFFER_BICARBONATES
+                NombreAcido = acido.Nombre,
+                VolumenAcido_mlL = volumenAcido_mlL_directo,
+                ConcentracionHidrogeno_mgL = hPlusRequerido_mgL,
+                ConcentracionHidrogeno_mmolL = hPlusRequerido_mgL / acido.PesoMolecular,
+                ContribucionNutriente_mgL = contribucionNutriente,
+                TipoNutriente = acido.ElementoProporcionado,
+                BicarbonatosANeutralizar = bicarbonatoANeutralizar,
+                BicarbonatosRestantes = BICARBONATOS_BUFFER
             };
         }
 
-        public TitrationResult CalculateFromTitration(List<TitrationReplication> replications, string acidType = "HNO3")
+        public ResultadoTitracion CalcularDesdeTitracion(List<ReplicaTitracion> replicas, string tipoAcido = "HNO3")
         {
-            var acid = acids[acidType];
-            var result = new TitrationResult { Replications = replications };
+            var acido = acidos[tipoAcido];
+            var resultado = new ResultadoTitracion { Replicas = replicas };
 
-            // Calculate average acid volume
-            double totalAcidVolume = 0;
-            foreach (var rep in replications)
+            // Calcular volumen promedio de ácido
+            double volumenTotalAcido = 0;
+            foreach (var replica in replicas)
             {
-                rep.AcidPerLiter_mlL = rep.AcidUsed_ml / rep.WaterVolume_L;
-                totalAcidVolume += rep.AcidPerLiter_mlL;
+                replica.AcidoPorLitro_mlL = replica.AcidoUsado_ml / replica.VolumenAgua_L;
+                volumenTotalAcido += replica.AcidoPorLitro_mlL;
             }
-            result.AverageAcidVolume_mlL = totalAcidVolume / replications.Count;
+            resultado.VolumenAcidoPromedio_mlL = volumenTotalAcido / replicas.Count;
 
-            // Calculate bicarbonate concentration from acid volume
+            // Calcular concentración de bicarbonato desde volumen de ácido
             // H+ = Q × n × D × P/100
-            double hPlus_mgL = result.AverageAcidVolume_mlL * acid.Valence *
-                              acid.Density * (acid.Purity / 100.0);
+            double hPlus_mgL = resultado.VolumenAcidoPromedio_mlL * acido.Valencia *
+                              acido.Densidad * (acido.Pureza / 100.0);
 
-            result.CalculatedBicarbonates_mgL = hPlus_mgL;
-            result.TotalBicarbonates_mgL = result.CalculatedBicarbonates_mgL + BUFFER_BICARBONATES;
+            resultado.BicarbonatosCalculados_mgL = hPlus_mgL;
+            resultado.BicarbonatosTotales_mgL = resultado.BicarbonatosCalculados_mgL + BICARBONATOS_BUFFER;
 
-            return result;
+            return resultado;
         }
 
-        public Dictionary<string, double> GetAcidProperties(string acidType)
+        public Dictionary<string, double> ObtenerPropiedadesAcido(string tipoAcido)
         {
-            if (!acids.ContainsKey(acidType))
+            if (!acidos.ContainsKey(tipoAcido))
                 return new Dictionary<string, double>();
 
-            var acid = acids[acidType];
+            var acido = acidos[tipoAcido];
             return new Dictionary<string, double>
             {
-                ["Purity"] = acid.Purity,
-                ["Density"] = acid.Density,
-                ["MolecularWeight"] = acid.MolecularWeight,
-                ["Valence"] = acid.Valence,
-                ["ElementMolecularWeight"] = acid.ElementMolecularWeight
+                ["Pureza"] = acido.Pureza,
+                ["Densidad"] = acido.Densidad,
+                ["PesoMolecular"] = acido.PesoMolecular,
+                ["Valencia"] = acido.Valencia,
+                ["PesoMolecularElemento"] = acido.PesoMolecularElemento
             };
         }
 
-        public bool RequiresAcidAdjustment(double waterPH, double targetPH = 6.0)
+        public bool RequiereAjusteAcido(double pHAgua, double pHObjetivo = 6.0)
         {
-            return waterPH > targetPH;
+            return pHAgua > pHObjetivo;
         }
 
-        public string GetAcidRecommendation(double hco3_mgL, double currentP_mgL, double targetP_mgL)
+        public string ObtenerRecomendacionAcido(double hco3_mgL, double pActual_mgL, double pObjetivo_mgL)
         {
-            string strategy = SelectAcidStrategy(hco3_mgL, targetP_mgL, currentP_mgL);
+            string estrategia = SeleccionarEstrategiaAcido(hco3_mgL, pObjetivo_mgL, pActual_mgL);
 
-            switch (strategy)
+            switch (estrategia)
             {
-                case "TwoStepStrategy":
-                    return $"High bicarbonates ({hco3_mgL:F1} mg/L > 122 mg/L). " +
-                           "Recommended: Use phosphoric acid first for P requirements, then nitric acid for remaining pH adjustment.";
+                case "EstrategiaDosPasos":
+                    return $"Bicarbonatos altos ({hco3_mgL:F1} mg/L > 122 mg/L). " +
+                           "Recomendado: Usar ácido fosfórico primero para requerimientos de P, luego ácido nítrico para ajuste de pH restante.";
 
-                case "PhosphoricAcidOption":
-                    return $"Moderate bicarbonates ({hco3_mgL:F1} mg/L) and P needed. " +
-                           "Option: Use phosphoric acid to provide P and adjust pH simultaneously.";
+                case "OpcionAcidoFosforico":
+                    return $"Bicarbonatos moderados ({hco3_mgL:F1} mg/L) y P necesario. " +
+                           "Opción: Usar ácido fosfórico para proporcionar P y ajustar pH simultáneamente.";
 
-                case "NitricAcidOnly":
+                case "SoloAcidoNitrico":
                 default:
-                    return $"Low bicarbonates ({hco3_mgL:F1} mg/L < 122 mg/L). " +
-                           "Recommended: Use nitric acid for pH adjustment.";
+                    return $"Bicarbonatos bajos ({hco3_mgL:F1} mg/L < 122 mg/L). " +
+                           "Recomendado: Usar ácido nítrico para ajuste de pH.";
             }
         }
     }

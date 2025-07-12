@@ -2,306 +2,307 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 #pragma warning disable CS8618
-namespace HydroponicCalculator.Modules
+
+namespace CalculadoraHidroponica.Modulos
 {
-    public enum CompatibilityLevel
+    public enum NivelCompatibilidad
     {
-        C = 0, // 100% compatible dry and in water
-        I = 1, // Incompatible dry and in water
-        E = 2, // Compatible only in water at injection time
-        L = 3, // Limited compatibility - use limited amounts
-        P = 4, // Generates heat - dangerous, add acid to water
-        S = 5  // Solubility limited
+        C = 0, // 100% compatible seco y en agua
+        I = 1, // Incompatible seco y en agua
+        E = 2, // Compatible solo en agua al momento de inyección
+        L = 3, // Compatibilidad limitada - usar cantidades limitadas
+        P = 4, // Genera calor - peligroso, agregar ácido al agua
+        S = 5  // Solubilidad limitada
     }
 
-    public class FertilizerCompatibility
+    public class CompatibilidadFertilizante
     {
-        public string Fertilizer1 { get; set; } = "";
-        public string Fertilizer2 { get; set; } = "";
-        public CompatibilityLevel Compatibility { get; set; }
-        public string Description { get; set; } = "";
-        public string Recommendation { get; set; } = "";
+        public string Fertilizante1 { get; set; } = "";
+        public string Fertilizante2 { get; set; } = "";
+        public NivelCompatibilidad Compatibilidad { get; set; }
+        public string Descripcion { get; set; } = "";
+        public string Recomendacion { get; set; } = "";
     }
 
-    public class FertilizerSolubility
+    public class SolubilidadFertilizante
     {
-        public string Name { get; set; } = "";
+        public string Nombre { get; set; } = "";
         public string Formula { get; set; } = "";
-        public double Solubility_0C { get; set; } // g/L at 0°C
-        public double Solubility_20C { get; set; } // g/L at 20°C
-        public double Solubility_40C { get; set; } // g/L at 40°C
-        public double SafeConcentrationLimit { get; set; } // 50% of solubility limit
-        public double RecommendedMaxConcentration { get; set; } // 80% of safe limit
+        public double Solubilidad_0C { get; set; } // g/L a 0°C
+        public double Solubilidad_20C { get; set; } // g/L a 20°C
+        public double Solubilidad_40C { get; set; } // g/L a 40°C
+        public double LimiteConcentracionSegura { get; set; } // 50% del límite de solubilidad
+        public double ConcentracionMaximaRecomendada { get; set; } // 80% del límite seguro
     }
 
-    public class ConcentrationFactor
+    public class FactorConcentracion
     {
-        public string Description { get; set; } = "";
-        public int Factor { get; set; } // e.g., 200 for 1:200
-        public double Percentage { get; set; } // e.g., 0.5% for 1:200
-        public double InjectionRate_LperM3 { get; set; } // L/m³
-        public string Application { get; set; } = ""; // Recommended application type
+        public string Descripcion { get; set; } = "";
+        public int Factor { get; set; } // ej., 200 para 1:200
+        public double Porcentaje { get; set; } // ej., 0.5% para 1:200
+        public double TasaInyeccion_LporM3 { get; set; } // L/m³
+        public string Aplicacion { get; set; } = ""; // Tipo de aplicación recomendada
     }
 
-    public class TankDistribution
+    public class DistribucionTanque
     {
-        public int TankNumber { get; set; }
-        public string TankLabel { get; set; } = "";
-        public List<string> Fertilizers { get; set; } = new List<string>();
-        public List<string> Acids { get; set; } = new List<string>();
-        public Dictionary<string, double> Concentrations_gL { get; set; } = new Dictionary<string, double>();
-        public Dictionary<string, double> FertilizerAmounts_kg { get; set; } = new Dictionary<string, double>();
-        public double TotalDensity_gL { get; set; }
-        public double Volume_L { get; set; }
-        public List<string> CompatibilityWarnings { get; set; } = new List<string>();
-        public List<string> SolubilityWarnings { get; set; } = new List<string>();
-        public List<string> PreparationInstructions { get; set; } = new List<string>();
-        public double EstimatedCost { get; set; }
-        public string TankColor { get; set; } = ""; // For visual identification
+        public int NumeroTanque { get; set; }
+        public string EtiquetaTanque { get; set; } = "";
+        public List<string> Fertilizantes { get; set; } = new List<string>();
+        public List<string> Acidos { get; set; } = new List<string>();
+        public Dictionary<string, double> Concentraciones_gL { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> CantidadesFertilizante_kg { get; set; } = new Dictionary<string, double>();
+        public double DensidadTotal_gL { get; set; }
+        public double Volumen_L { get; set; }
+        public List<string> AdvertenciasCompatibilidad { get; set; } = new List<string>();
+        public List<string> AdvertenciasSolubilidad { get; set; } = new List<string>();
+        public List<string> InstruccionesPreparacion { get; set; } = new List<string>();
+        public double CostoEstimado { get; set; }
+        public string ColorTanque { get; set; } = ""; // Para identificación visual
     }
 
-    public class ConcentratedSolutionReport
+    public class ReporteSolucionConcentrada
     {
-        public int NumberOfTanks { get; set; }
-        public ConcentrationFactor ConcentrationFactor { get; set; } = new ConcentrationFactor();
-        public List<TankDistribution> Tanks { get; set; } = new List<TankDistribution>();
-        public Dictionary<string, double> VolumeRequirements { get; set; } = new Dictionary<string, double>();
-        public double TotalCost { get; set; }
-        public double CostPerM3_DilutedSolution { get; set; }
-        public List<string> CriticalWarnings { get; set; } = new List<string>();
-        public List<string> GeneralRecommendations { get; set; } = new List<string>();
-        public Dictionary<string, double> FertilizerTotals_kg { get; set; } = new Dictionary<string, double>();
-        public DateTime CalculationDate { get; set; } = DateTime.Now;
+        public int NumeroDeTanques { get; set; }
+        public FactorConcentracion FactorConcentracion { get; set; } = new FactorConcentracion();
+        public List<DistribucionTanque> Tanques { get; set; } = new List<DistribucionTanque>();
+        public Dictionary<string, double> RequerimientosVolumen { get; set; } = new Dictionary<string, double>();
+        public double CostoTotal { get; set; }
+        public double CostoPorM3_SolucionDiluida { get; set; }
+        public List<string> AdvertenciasCriticas { get; set; } = new List<string>();
+        public List<string> RecomendacionesGenerales { get; set; } = new List<string>();
+        public Dictionary<string, double> TotalesFertilizante_kg { get; set; } = new Dictionary<string, double>();
+        public DateTime FechaCalculo { get; set; } = DateTime.Now;
     }
 
-    public class ConcentratedSolutionsModule
+    public class ModuloSolucionesConcentradas
     {
-        private Dictionary<string, FertilizerSolubility> fertilizerSolubilities;
-        private Dictionary<(string, string), CompatibilityLevel> compatibilityMatrix;
-        private List<ConcentrationFactor> concentrationFactors;
-        private Dictionary<string, double> fertilizerCosts; // Cost per kg
+        private Dictionary<string, SolubilidadFertilizante> solubilidadesFertilizantes;
+        private Dictionary<(string, string), NivelCompatibilidad> matrizCompatibilidad;
+        private List<FactorConcentracion> factoresConcentracion;
+        private Dictionary<string, double> costosFertilizantes; // Costo por kg
 
-        public ConcentratedSolutionsModule()
+        public ModuloSolucionesConcentradas()
         {
-            InitializeFertilizerSolubilities();
-            InitializeCompatibilityMatrix();
-            InitializeConcentrationFactors();
-            InitializeFertilizerCosts();
+            InicializarSolubilidadesFertilizantes();
+            InicializarMatrizCompatibilidad();
+            InicializarFactoresConcentracion();
+            InicializarCostosFertilizantes();
         }
 
-        private void InitializeFertilizerSolubilities()
+        private void InicializarSolubilidadesFertilizantes()
         {
-            fertilizerSolubilities = new Dictionary<string, FertilizerSolubility>
+            solubilidadesFertilizantes = new Dictionary<string, SolubilidadFertilizante>
             {
-                ["NH4NO3"] = new FertilizerSolubility
+                ["NH4NO3"] = new SolubilidadFertilizante
                 {
-                    Name = "Ammonium Nitrate",
+                    Nombre = "Nitrato de Amonio",
                     Formula = "NH4NO3",
-                    Solubility_0C = 1800,
-                    Solubility_20C = 1900,
-                    Solubility_40C = 2190,
-                    SafeConcentrationLimit = 950, // 50% of 20°C solubility
-                    RecommendedMaxConcentration = 760 // 80% of safe limit
+                    Solubilidad_0C = 1800,
+                    Solubilidad_20C = 1900,
+                    Solubilidad_40C = 2190,
+                    LimiteConcentracionSegura = 950, // 50% de solubilidad a 20°C
+                    ConcentracionMaximaRecomendada = 760 // 80% del límite seguro
                 },
-                ["(NH4)2SO4"] = new FertilizerSolubility
+                ["(NH4)2SO4"] = new SolubilidadFertilizante
                 {
-                    Name = "Ammonium Sulfate",
+                    Nombre = "Sulfato de Amonio",
                     Formula = "(NH4)2SO4",
-                    Solubility_0C = 700,
-                    Solubility_20C = 760,
-                    Solubility_40C = 760,
-                    SafeConcentrationLimit = 380,
-                    RecommendedMaxConcentration = 304
+                    Solubilidad_0C = 700,
+                    Solubilidad_20C = 760,
+                    Solubilidad_40C = 760,
+                    LimiteConcentracionSegura = 380,
+                    ConcentracionMaximaRecomendada = 304
                 },
-                ["Ca(NO3)2.2H2O"] = new FertilizerSolubility
+                ["Ca(NO3)2.2H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Calcium Nitrate",
+                    Nombre = "Nitrato de Calcio",
                     Formula = "Ca(NO3)2·2H2O",
-                    Solubility_0C = 1200,
-                    Solubility_20C = 1200,
-                    Solubility_40C = 1200,
-                    SafeConcentrationLimit = 600,
-                    RecommendedMaxConcentration = 480
+                    Solubilidad_0C = 1200,
+                    Solubilidad_20C = 1200,
+                    Solubilidad_40C = 1200,
+                    LimiteConcentracionSegura = 600,
+                    ConcentracionMaximaRecomendada = 480
                 },
-                ["KNO3"] = new FertilizerSolubility
+                ["KNO3"] = new SolubilidadFertilizante
                 {
-                    Name = "Potassium Nitrate",
+                    Nombre = "Nitrato de Potasio",
                     Formula = "KNO3",
-                    Solubility_0C = 130,
-                    Solubility_20C = 335,
-                    Solubility_40C = 630,
-                    SafeConcentrationLimit = 167,
-                    RecommendedMaxConcentration = 134
+                    Solubilidad_0C = 130,
+                    Solubilidad_20C = 335,
+                    Solubilidad_40C = 630,
+                    LimiteConcentracionSegura = 167,
+                    ConcentracionMaximaRecomendada = 134
                 },
-                ["NH4H2PO4"] = new FertilizerSolubility
+                ["NH4H2PO4"] = new SolubilidadFertilizante
                 {
-                    Name = "Monoammonium Phosphate",
+                    Nombre = "Fosfato Monoamónico",
                     Formula = "NH4H2PO4",
-                    Solubility_0C = 225,
-                    Solubility_20C = 400,
-                    Solubility_40C = 818,
-                    SafeConcentrationLimit = 200,
-                    RecommendedMaxConcentration = 160
+                    Solubilidad_0C = 225,
+                    Solubilidad_20C = 400,
+                    Solubilidad_40C = 818,
+                    LimiteConcentracionSegura = 200,
+                    ConcentracionMaximaRecomendada = 160
                 },
-                ["(NH4)2HPO4"] = new FertilizerSolubility
+                ["(NH4)2HPO4"] = new SolubilidadFertilizante
                 {
-                    Name = "Diammonium Phosphate",
+                    Nombre = "Fosfato Diamónico",
                     Formula = "(NH4)2HPO4",
-                    Solubility_0C = 575,
-                    Solubility_20C = 400,
-                    Solubility_40C = 818,
-                    SafeConcentrationLimit = 200,
-                    RecommendedMaxConcentration = 160
+                    Solubilidad_0C = 575,
+                    Solubilidad_20C = 400,
+                    Solubilidad_40C = 818,
+                    LimiteConcentracionSegura = 200,
+                    ConcentracionMaximaRecomendada = 160
                 },
-                ["KH2PO4"] = new FertilizerSolubility
+                ["KH2PO4"] = new SolubilidadFertilizante
                 {
-                    Name = "Monopotassium Phosphate",
+                    Nombre = "Fosfato Monopotásico",
                     Formula = "KH2PO4",
-                    Solubility_0C = 143,
-                    Solubility_20C = 227,
-                    Solubility_40C = 339,
-                    SafeConcentrationLimit = 113,
-                    RecommendedMaxConcentration = 90
+                    Solubilidad_0C = 143,
+                    Solubilidad_20C = 227,
+                    Solubilidad_40C = 339,
+                    LimiteConcentracionSegura = 113,
+                    ConcentracionMaximaRecomendada = 90
                 },
-                ["K2HPO4.3H2O"] = new FertilizerSolubility
+                ["K2HPO4.3H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Dipotassium Phosphate",
+                    Nombre = "Fosfato Dipotásico",
                     Formula = "K2HPO4·3H2O",
-                    Solubility_0C = 1590,
-                    Solubility_20C = 2125,
-                    Solubility_40C = 2125,
-                    SafeConcentrationLimit = 1062,
-                    RecommendedMaxConcentration = 850
+                    Solubilidad_0C = 1590,
+                    Solubilidad_20C = 2125,
+                    Solubilidad_40C = 2125,
+                    LimiteConcentracionSegura = 1062,
+                    ConcentracionMaximaRecomendada = 850
                 },
-                ["KCl"] = new FertilizerSolubility
+                ["KCl"] = new SolubilidadFertilizante
                 {
-                    Name = "Potassium Chloride",
+                    Nombre = "Cloruro de Potasio",
                     Formula = "KCl",
-                    Solubility_0C = 282,
-                    Solubility_20C = 342,
-                    Solubility_40C = 403,
-                    SafeConcentrationLimit = 171,
-                    RecommendedMaxConcentration = 137
+                    Solubilidad_0C = 282,
+                    Solubilidad_20C = 342,
+                    Solubilidad_40C = 403,
+                    LimiteConcentracionSegura = 171,
+                    ConcentracionMaximaRecomendada = 137
                 },
-                ["K2SO4"] = new FertilizerSolubility
+                ["K2SO4"] = new SolubilidadFertilizante
                 {
-                    Name = "Potassium Sulfate",
+                    Nombre = "Sulfato de Potasio",
                     Formula = "K2SO4",
-                    Solubility_0C = 74,
-                    Solubility_20C = 111,
-                    Solubility_40C = 148,
-                    SafeConcentrationLimit = 55,
-                    RecommendedMaxConcentration = 44
+                    Solubilidad_0C = 74,
+                    Solubilidad_20C = 111,
+                    Solubilidad_40C = 148,
+                    LimiteConcentracionSegura = 55,
+                    ConcentracionMaximaRecomendada = 44
                 },
-                ["MgSO4.7H2O"] = new FertilizerSolubility
+                ["MgSO4.7H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Magnesium Sulfate",
+                    Nombre = "Sulfato de Magnesio",
                     Formula = "MgSO4·7H2O",
-                    Solubility_0C = 710,
-                    Solubility_20C = 710,
-                    Solubility_40C = 710,
-                    SafeConcentrationLimit = 355,
-                    RecommendedMaxConcentration = 284
+                    Solubilidad_0C = 710,
+                    Solubilidad_20C = 710,
+                    Solubilidad_40C = 710,
+                    LimiteConcentracionSegura = 355,
+                    ConcentracionMaximaRecomendada = 284
                 },
-                ["MgCl2.6H2O"] = new FertilizerSolubility
+                ["MgCl2.6H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Magnesium Chloride",
+                    Nombre = "Cloruro de Magnesio",
                     Formula = "MgCl2·6H2O",
-                    Solubility_0C = 528,
-                    Solubility_20C = 546,
-                    Solubility_40C = 575,
-                    SafeConcentrationLimit = 273,
-                    RecommendedMaxConcentration = 218
+                    Solubilidad_0C = 528,
+                    Solubilidad_20C = 546,
+                    Solubilidad_40C = 575,
+                    LimiteConcentracionSegura = 273,
+                    ConcentracionMaximaRecomendada = 218
                 },
-                ["CaCl2.6H2O"] = new FertilizerSolubility
+                ["CaCl2.6H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Calcium Chloride",
+                    Nombre = "Cloruro de Calcio",
                     Formula = "CaCl2·6H2O",
-                    Solubility_0C = 600,
-                    Solubility_20C = 600,
-                    Solubility_40C = 600,
-                    SafeConcentrationLimit = 300,
-                    RecommendedMaxConcentration = 240
+                    Solubilidad_0C = 600,
+                    Solubilidad_20C = 600,
+                    Solubilidad_40C = 600,
+                    LimiteConcentracionSegura = 300,
+                    ConcentracionMaximaRecomendada = 240
                 },
-                ["FeSO4.7H2O"] = new FertilizerSolubility
+                ["FeSO4.7H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Iron Sulfate",
+                    Nombre = "Sulfato de Hierro",
                     Formula = "FeSO4·7H2O",
-                    Solubility_0C = 155,
-                    Solubility_20C = 260,
-                    Solubility_40C = 650,
-                    SafeConcentrationLimit = 130,
-                    RecommendedMaxConcentration = 104
+                    Solubilidad_0C = 155,
+                    Solubilidad_20C = 260,
+                    Solubilidad_40C = 650,
+                    LimiteConcentracionSegura = 130,
+                    ConcentracionMaximaRecomendada = 104
                 },
-                ["CuSO4.5H2O"] = new FertilizerSolubility
+                ["CuSO4.5H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Copper Sulfate",
+                    Nombre = "Sulfato de Cobre",
                     Formula = "CuSO4·5H2O",
-                    Solubility_0C = 316,
-                    Solubility_20C = 316,
-                    Solubility_40C = 316,
-                    SafeConcentrationLimit = 158,
-                    RecommendedMaxConcentration = 126
+                    Solubilidad_0C = 316,
+                    Solubilidad_20C = 316,
+                    Solubilidad_40C = 316,
+                    LimiteConcentracionSegura = 158,
+                    ConcentracionMaximaRecomendada = 126
                 },
-                ["MnSO4.4H2O"] = new FertilizerSolubility
+                ["MnSO4.4H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Manganese Sulfate",
+                    Nombre = "Sulfato de Manganeso",
                     Formula = "MnSO4·4H2O",
-                    Solubility_0C = 1053,
-                    Solubility_20C = 1053,
-                    Solubility_40C = 1053,
-                    SafeConcentrationLimit = 526,
-                    RecommendedMaxConcentration = 421
+                    Solubilidad_0C = 1053,
+                    Solubilidad_20C = 1053,
+                    Solubilidad_40C = 1053,
+                    LimiteConcentracionSegura = 526,
+                    ConcentracionMaximaRecomendada = 421
                 },
-                ["ZnSO4.7H2O"] = new FertilizerSolubility
+                ["ZnSO4.7H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Zinc Sulfate",
+                    Nombre = "Sulfato de Zinc",
                     Formula = "ZnSO4·7H2O",
-                    Solubility_0C = 750,
-                    Solubility_20C = 750,
-                    Solubility_40C = 750,
-                    SafeConcentrationLimit = 375,
-                    RecommendedMaxConcentration = 300
+                    Solubilidad_0C = 750,
+                    Solubilidad_20C = 750,
+                    Solubilidad_40C = 750,
+                    LimiteConcentracionSegura = 375,
+                    ConcentracionMaximaRecomendada = 300
                 },
-                ["H3BO3"] = new FertilizerSolubility
+                ["H3BO3"] = new SolubilidadFertilizante
                 {
-                    Name = "Boric Acid",
+                    Nombre = "Ácido Bórico",
                     Formula = "H3BO3",
-                    Solubility_0C = 63.5,
-                    Solubility_20C = 63.5,
-                    Solubility_40C = 63.5,
-                    SafeConcentrationLimit = 31.7,
-                    RecommendedMaxConcentration = 25.4
+                    Solubilidad_0C = 63.5,
+                    Solubilidad_20C = 63.5,
+                    Solubilidad_40C = 63.5,
+                    LimiteConcentracionSegura = 31.7,
+                    ConcentracionMaximaRecomendada = 25.4
                 },
-                ["FeEDTA"] = new FertilizerSolubility
+                ["FeEDTA"] = new SolubilidadFertilizante
                 {
-                    Name = "Iron EDTA Chelate",
+                    Nombre = "Quelato de Hierro EDTA",
                     Formula = "FeEDTA",
-                    Solubility_0C = 1000,
-                    Solubility_20C = 1000,
-                    Solubility_40C = 1000,
-                    SafeConcentrationLimit = 500,
-                    RecommendedMaxConcentration = 400
+                    Solubilidad_0C = 1000,
+                    Solubilidad_20C = 1000,
+                    Solubilidad_40C = 1000,
+                    LimiteConcentracionSegura = 500,
+                    ConcentracionMaximaRecomendada = 400
                 },
-                ["Na2MoO4.2H2O"] = new FertilizerSolubility
+                ["Na2MoO4.2H2O"] = new SolubilidadFertilizante
                 {
-                    Name = "Sodium Molybdate",
+                    Nombre = "Molibdato de Sodio",
                     Formula = "Na2MoO4·2H2O",
-                    Solubility_0C = 840,
-                    Solubility_20C = 840,
-                    Solubility_40C = 840,
-                    SafeConcentrationLimit = 420,
-                    RecommendedMaxConcentration = 336
+                    Solubilidad_0C = 840,
+                    Solubilidad_20C = 840,
+                    Solubilidad_40C = 840,
+                    LimiteConcentracionSegura = 420,
+                    ConcentracionMaximaRecomendada = 336
                 }
             };
         }
 
-        private void InitializeCompatibilityMatrix()
+        private void InicializarMatrizCompatibilidad()
         {
-            compatibilityMatrix = new Dictionary<(string, string), CompatibilityLevel>();
+            matrizCompatibilidad = new Dictionary<(string, string), NivelCompatibilidad>();
 
-            // Define key incompatible combinations based on the presentation compatibility table
-            var incompatiblePairs = new List<(string, string)>
+            // Definir combinaciones incompatibles clave basadas en la tabla de compatibilidad de la presentación
+            var paresIncompatibles = new List<(string, string)>
             {
                 ("Ca(NO3)2.2H2O", "K2SO4"),
                 ("Ca(NO3)2.2H2O", "MgSO4.7H2O"),
@@ -311,76 +312,76 @@ namespace HydroponicCalculator.Modules
                 ("Ca(NO3)2.2H2O", "(NH4)2HPO4")
             };
 
-            // Limited compatibility pairs
-            var limitedCompatibilityPairs = new List<(string, string)>
+            // Pares de compatibilidad limitada
+            var paresCompatibilidadLimitada = new List<(string, string)>
             {
                 ("KNO3", "KH2PO4"),
                 ("NH4NO3", "NH4H2PO4"),
                 ("K2SO4", "KH2PO4")
             };
 
-            // Compatible only in water pairs
-            var waterOnlyPairs = new List<(string, string)>
+            // Compatible solo en agua
+            var paresSoloEnAgua = new List<(string, string)>
             {
                 ("MgSO4.7H2O", "KH2PO4"),
                 ("(NH4)2SO4", "KH2PO4"),
                 ("FeSO4.7H2O", "Ca(NO3)2.2H2O")
             };
 
-            // All fertilizers list
-            var fertilizers = fertilizerSolubilities.Keys.ToList();
+            // Lista de todos los fertilizantes
+            var fertilizantes = solubilidadesFertilizantes.Keys.ToList();
 
-            // Initialize all as compatible by default
-            foreach (var fert1 in fertilizers)
+            // Inicializar todos como compatibles por defecto
+            foreach (var fert1 in fertilizantes)
             {
-                foreach (var fert2 in fertilizers)
+                foreach (var fert2 in fertilizantes)
                 {
                     if (fert1 != fert2)
                     {
-                        compatibilityMatrix[(fert1, fert2)] = CompatibilityLevel.C;
+                        matrizCompatibilidad[(fert1, fert2)] = NivelCompatibilidad.C;
                     }
                 }
             }
 
-            // Set incompatible pairs
-            foreach (var pair in incompatiblePairs)
+            // Establecer pares incompatibles
+            foreach (var par in paresIncompatibles)
             {
-                compatibilityMatrix[(pair.Item1, pair.Item2)] = CompatibilityLevel.I;
-                compatibilityMatrix[(pair.Item2, pair.Item1)] = CompatibilityLevel.I;
+                matrizCompatibilidad[(par.Item1, par.Item2)] = NivelCompatibilidad.I;
+                matrizCompatibilidad[(par.Item2, par.Item1)] = NivelCompatibilidad.I;
             }
 
-            // Set limited compatibility pairs
-            foreach (var pair in limitedCompatibilityPairs)
+            // Establecer pares de compatibilidad limitada
+            foreach (var par in paresCompatibilidadLimitada)
             {
-                compatibilityMatrix[(pair.Item1, pair.Item2)] = CompatibilityLevel.L;
-                compatibilityMatrix[(pair.Item2, pair.Item1)] = CompatibilityLevel.L;
+                matrizCompatibilidad[(par.Item1, par.Item2)] = NivelCompatibilidad.L;
+                matrizCompatibilidad[(par.Item2, par.Item1)] = NivelCompatibilidad.L;
             }
 
-            // Set water-only compatibility pairs
-            foreach (var pair in waterOnlyPairs)
+            // Establecer pares de compatibilidad solo en agua
+            foreach (var par in paresSoloEnAgua)
             {
-                compatibilityMatrix[(pair.Item1, pair.Item2)] = CompatibilityLevel.E;
-                compatibilityMatrix[(pair.Item2, pair.Item1)] = CompatibilityLevel.E;
+                matrizCompatibilidad[(par.Item1, par.Item2)] = NivelCompatibilidad.E;
+                matrizCompatibilidad[(par.Item2, par.Item1)] = NivelCompatibilidad.E;
             }
         }
 
-        private void InitializeConcentrationFactors()
+        private void InicializarFactoresConcentracion()
         {
-            concentrationFactors = new List<ConcentrationFactor>
+            factoresConcentracion = new List<FactorConcentracion>
             {
-                new ConcentrationFactor { Description = "1:40", Factor = 40, Percentage = 2.5, InjectionRate_LperM3 = 25, Application = "High precision systems" },
-                new ConcentrationFactor { Description = "1:50", Factor = 50, Percentage = 2.0, InjectionRate_LperM3 = 20, Application = "Standard hydroponic systems" },
-                new ConcentrationFactor { Description = "1:66", Factor = 66, Percentage = 1.5, InjectionRate_LperM3 = 15, Application = "Medium concentration systems" },
-                new ConcentrationFactor { Description = "1:100", Factor = 100, Percentage = 1.0, InjectionRate_LperM3 = 10, Application = "General purpose systems" },
-                new ConcentrationFactor { Description = "1:133", Factor = 133, Percentage = 0.75, InjectionRate_LperM3 = 7.5, Application = "Low concentration systems" },
-                new ConcentrationFactor { Description = "1:200", Factor = 200, Percentage = 0.5, InjectionRate_LperM3 = 5, Application = "High volume systems" },
-                new ConcentrationFactor { Description = "1:400", Factor = 400, Percentage = 0.25, InjectionRate_LperM3 = 2.5, Application = "Very high volume systems" }
+                new FactorConcentracion { Descripcion = "1:40", Factor = 40, Porcentaje = 2.5, TasaInyeccion_LporM3 = 25, Aplicacion = "Sistemas de alta precisión" },
+                new FactorConcentracion { Descripcion = "1:50", Factor = 50, Porcentaje = 2.0, TasaInyeccion_LporM3 = 20, Aplicacion = "Sistemas hidropónicos estándar" },
+                new FactorConcentracion { Descripcion = "1:66", Factor = 66, Porcentaje = 1.5, TasaInyeccion_LporM3 = 15, Aplicacion = "Sistemas de concentración media" },
+                new FactorConcentracion { Descripcion = "1:100", Factor = 100, Porcentaje = 1.0, TasaInyeccion_LporM3 = 10, Aplicacion = "Sistemas de propósito general" },
+                new FactorConcentracion { Descripcion = "1:133", Factor = 133, Porcentaje = 0.75, TasaInyeccion_LporM3 = 7.5, Aplicacion = "Sistemas de baja concentración" },
+                new FactorConcentracion { Descripcion = "1:200", Factor = 200, Porcentaje = 0.5, TasaInyeccion_LporM3 = 5, Aplicacion = "Sistemas de alto volumen" },
+                new FactorConcentracion { Descripcion = "1:400", Factor = 400, Porcentaje = 0.25, TasaInyeccion_LporM3 = 2.5, Aplicacion = "Sistemas de muy alto volumen" }
             };
         }
 
-        private void InitializeFertilizerCosts()
+        private void InicializarCostosFertilizantes()
         {
-            fertilizerCosts = new Dictionary<string, double>
+            costosFertilizantes = new Dictionary<string, double>
             {
                 ["NH4NO3"] = 0.45,
                 ["(NH4)2SO4"] = 0.50,
@@ -405,317 +406,316 @@ namespace HydroponicCalculator.Modules
             };
         }
 
-        public int CalculateConcentrationFactor(double totalFlow_Lh, double injectionFlow_Lh)
+        public int CalcularFactorConcentracion(double flujoTotal_Lh, double flujoInyeccion_Lh)
         {
-            if (injectionFlow_Lh <= 0) return 100; // Default factor
-            return (int)Math.Round(totalFlow_Lh / injectionFlow_Lh);
+            if (flujoInyeccion_Lh <= 0) return 100; // Factor por defecto
+            return (int)Math.Round(flujoTotal_Lh / flujoInyeccion_Lh);
         }
 
-        public ConcentrationFactor GetConcentrationFactor(int factor)
+        public FactorConcentracion ObtenerFactorConcentracion(int factor)
         {
-            return concentrationFactors.FirstOrDefault(cf => cf.Factor == factor) ??
-                   new ConcentrationFactor { Description = $"1:{factor}", Factor = factor, Percentage = 100.0 / factor, InjectionRate_LperM3 = 1000.0 / factor };
+            return factoresConcentracion.FirstOrDefault(cf => cf.Factor == factor) ??
+                   new FactorConcentracion { Descripcion = $"1:{factor}", Factor = factor, Porcentaje = 100.0 / factor, TasaInyeccion_LporM3 = 1000.0 / factor };
         }
 
-        public List<ConcentrationFactor> GetAvailableConcentrationFactors()
+        public List<FactorConcentracion> ObtenerFactoresConcentracionDisponibles()
         {
-            return new List<ConcentrationFactor>(concentrationFactors);
+            return new List<FactorConcentracion>(factoresConcentracion);
         }
 
-        public List<TankDistribution> DistributeFertilizers(
-            Dictionary<string, double> fertilizerConcentrations_mgL,
-            List<string> acidTypes,
-            int numberOfTanks,
-            int concentrationFactor,
-            double tankVolume_L = 200)
+        public List<DistribucionTanque> DistribuirFertilizantes(
+            Dictionary<string, double> concentracionesFertilizantes_mgL,
+            List<string> tiposAcidos,
+            int numeroDeTanques,
+            int factorConcentracion,
+            double volumenTanque_L = 200)
         {
-            var tanks = new List<TankDistribution>();
+            var tanques = new List<DistribucionTanque>();
 
-            // Initialize tanks with colors for identification
-            var tankColors = new[] { "Blue", "Green", "Red", "Yellow", "Orange", "Purple", "Brown", "Pink" };
+            // Inicializar tanques con colores para identificación
+            var coloresTanques = new[] { "Azul", "Verde", "Rojo", "Amarillo", "Naranja", "Púrpura", "Marrón", "Rosa" };
 
-            for (int i = 0; i < numberOfTanks; i++)
+            for (int i = 0; i < numeroDeTanques; i++)
             {
-                tanks.Add(new TankDistribution
+                tanques.Add(new DistribucionTanque
                 {
-                    TankNumber = i + 1,
-                    TankLabel = GetTankLabel(i),
-                    Volume_L = tankVolume_L,
-                    TankColor = tankColors[i % tankColors.Length]
+                    NumeroTanque = i + 1,
+                    EtiquetaTanque = ObtenerEtiquetaTanque(i),
+                    Volumen_L = volumenTanque_L,
+                    ColorTanque = coloresTanques[i % coloresTanques.Length]
                 });
             }
 
-            // Strategy based on number of tanks
-            switch (numberOfTanks)
+            // Estrategia basada en el número de tanques
+            switch (numeroDeTanques)
             {
                 case 2:
-                    DistributeInTwoTanks(tanks, fertilizerConcentrations_mgL, acidTypes, concentrationFactor);
+                    DistribuirEnDosTanques(tanques, concentracionesFertilizantes_mgL, tiposAcidos, factorConcentracion);
                     break;
                 case 3:
-                    DistributeInThreeTanks(tanks, fertilizerConcentrations_mgL, acidTypes, concentrationFactor);
+                    DistribuirEnTresTanques(tanques, concentracionesFertilizantes_mgL, tiposAcidos, factorConcentracion);
                     break;
                 case 4:
-                    DistributeInFourTanks(tanks, fertilizerConcentrations_mgL, acidTypes, concentrationFactor);
+                    DistribuirEnCuatroTanques(tanques, concentracionesFertilizantes_mgL, tiposAcidos, factorConcentracion);
                     break;
                 default:
-                    DistributeInMultipleTanks(tanks, fertilizerConcentrations_mgL, acidTypes, concentrationFactor);
+                    DistribuirEnMultiplesTanques(tanques, concentracionesFertilizantes_mgL, tiposAcidos, factorConcentracion);
                     break;
             }
 
-            // Check compatibility and solubility for each tank
-            foreach (var tank in tanks)
+            // Verificar compatibilidad y solubilidad para cada tanque
+            foreach (var tanque in tanques)
             {
-                CheckTankCompatibility(tank);
-                CheckTankSolubility(tank, concentrationFactor);
-                CalculateTankDensity(tank);
-                CalculateTankCost(tank);
-                GeneratePreparationInstructions(tank);
+                VerificarCompatibilidadTanque(tanque);
+                VerificarSolubilidadTanque(tanque, factorConcentracion);
+                CalcularDensidadTanque(tanque);
+                CalcularCostoTanque(tanque);
+                GenerarInstruccionesPreparacion(tanque);
             }
 
-            return tanks;
+            return tanques;
         }
 
-        private void DistributeInTwoTanks(List<TankDistribution> tanks, Dictionary<string, double> fertilizers, List<string> acids, int concentrationFactor)
+        private void DistribuirEnDosTanques(List<DistribucionTanque> tanques, Dictionary<string, double> fertilizantes, List<string> acidos, int factorConcentracion)
         {
-            // Tank A: Phosphates, Potassium, Magnesium, Micronutrients (avoid calcium)
-            var tankA = tanks[0];
-            tankA.TankLabel = "A - NPK + Micros";
+            // Tanque A: Fosfatos, Potasio, Magnesio, Micronutrientes (evitar calcio)
+            var tanqueA = tanques[0];
+            tanqueA.EtiquetaTanque = "A - NPK + Micros";
 
-            var tankAFertilizers = new[] { "KH2PO4", "KNO3", "K2SO4", "MgSO4.7H2O", "FeSO4.7H2O", "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3", "Na2MoO4.2H2O" };
-            foreach (var fert in tankAFertilizers)
+            var fertilizantesTanqueA = new[] { "KH2PO4", "KNO3", "K2SO4", "MgSO4.7H2O", "FeSO4.7H2O", "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3", "Na2MoO4.2H2O" };
+            foreach (var fert in fertilizantesTanqueA)
             {
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankA.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0; // Convert to g/L
-                    tankA.Concentrations_gL[fert] = concentratedAmount;
-                    tankA.FertilizerAmounts_kg[fert] = (concentratedAmount * tankA.Volume_L) / 1000.0; // Convert to kg
+                    tanqueA.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0; // Convertir a g/L
+                    tanqueA.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueA.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueA.Volumen_L) / 1000.0; // Convertir a kg
                 }
             }
 
-            // Tank B: Calcium and Acids (separate from phosphates and sulfates)
-            var tankB = tanks[1];
-            tankB.TankLabel = "B - Calcium + Acids";
+            // Tanque B: Calcio y Ácidos (separado de fosfatos y sulfatos)
+            var tanqueB = tanques[1];
+            tanqueB.EtiquetaTanque = "B - Calcio + Ácidos";
 
-            var tankBFertilizers = new[] { "Ca(NO3)2.2H2O", "CaCl2.6H2O" };
-            foreach (var fert in tankBFertilizers)
+            var fertilizantesTanqueB = new[] { "Ca(NO3)2.2H2O", "CaCl2.6H2O" };
+            foreach (var fert in fertilizantesTanqueB)
             {
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankB.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                    tankB.Concentrations_gL[fert] = concentratedAmount;
-                    tankB.FertilizerAmounts_kg[fert] = (concentratedAmount * tankB.Volume_L) / 1000.0;
+                    tanqueB.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                    tanqueB.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueB.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueB.Volumen_L) / 1000.0;
                 }
             }
 
-            tankB.Acids.AddRange(acids);
+            tanqueB.Acidos.AddRange(acidos);
         }
 
-        private void DistributeInThreeTanks(List<TankDistribution> tanks, Dictionary<string, double> fertilizers, List<string> acids, int concentrationFactor)
+        private void DistribuirEnTresTanques(List<DistribucionTanque> tanques, Dictionary<string, double> fertilizantes, List<string> acidos, int factorConcentracion)
         {
-            // Tank A: Phosphates and compatible potassium compounds
-            var tankA = tanks[0];
-            tankA.TankLabel = "A - Phosphates + K";
+            // Tanque A: Fosfatos y compuestos de potasio compatibles
+            var tanqueA = tanques[0];
+            tanqueA.EtiquetaTanque = "A - Fosfatos + K";
 
-            var tankAFertilizers = new[] { "KH2PO4", "KNO3", "K2SO4", "MgSO4.7H2O" };
-            foreach (var fert in tankAFertilizers)
+            var fertilizantesTanqueA = new[] { "KH2PO4", "KNO3", "K2SO4", "MgSO4.7H2O" };
+            foreach (var fert in fertilizantesTanqueA)
             {
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankA.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                    tankA.Concentrations_gL[fert] = concentratedAmount;
-                    tankA.FertilizerAmounts_kg[fert] = (concentratedAmount * tankA.Volume_L) / 1000.0;
+                    tanqueA.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                    tanqueA.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueA.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueA.Volumen_L) / 1000.0;
                 }
             }
 
-            // Tank B: Micronutrients
-            var tankB = tanks[1];
-            tankB.TankLabel = "B - Micronutrients";
+            // Tanque B: Micronutrientes
+            var tanqueB = tanques[1];
+            tanqueB.EtiquetaTanque = "B - Micronutrientes";
 
-            var tankBFertilizers = new[] { "FeSO4.7H2O", "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3", "Na2MoO4.2H2O" };
-            foreach (var fert in tankBFertilizers)
+            var fertilizantesTanqueB = new[] { "FeSO4.7H2O", "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3", "Na2MoO4.2H2O" };
+            foreach (var fert in fertilizantesTanqueB)
             {
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankB.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                    tankB.Concentrations_gL[fert] = concentratedAmount;
-                    tankB.FertilizerAmounts_kg[fert] = (concentratedAmount * tankB.Volume_L) / 1000.0;
+                    tanqueB.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                    tanqueB.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueB.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueB.Volumen_L) / 1000.0;
                 }
             }
 
-            // Tank C: Calcium and Acids
-            var tankC = tanks[2];
-            tankC.TankLabel = "C - Calcium + Acids";
+            // Tanque C: Calcio y Ácidos
+            var tanqueC = tanques[2];
+            tanqueC.EtiquetaTanque = "C - Calcio + Ácidos";
 
-            var tankCFertilizers = new[] { "Ca(NO3)2.2H2O", "CaCl2.6H2O" };
-            foreach (var fert in tankCFertilizers)
+            var fertilizantesTanqueC = new[] { "Ca(NO3)2.2H2O", "CaCl2.6H2O" };
+            foreach (var fert in fertilizantesTanqueC)
             {
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankC.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                    tankC.Concentrations_gL[fert] = concentratedAmount;
-                    tankC.FertilizerAmounts_kg[fert] = (concentratedAmount * tankC.Volume_L) / 1000.0;
+                    tanqueC.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                    tanqueC.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueC.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueC.Volumen_L) / 1000.0;
                 }
             }
 
-            tankC.Acids.AddRange(acids);
+            tanqueC.Acidos.AddRange(acidos);
         }
 
-        private void DistributeInFourTanks(List<TankDistribution> tanks, Dictionary<string, double> fertilizers, List<string> acids, int concentrationFactor)
+        private void DistribuirEnCuatroTanques(List<DistribucionTanque> tanques, Dictionary<string, double> fertilizantes, List<string> acidos, int factorConcentracion)
         {
-            // Tank A: Phosphates and some Potassium
-            var tankA = tanks[0];
-            tankA.TankLabel = "A - Phosphates";
+            // Tanque A: Fosfatos y algo de Potasio
+            var tanqueA = tanques[0];
+            tanqueA.EtiquetaTanque = "A - Fosfatos";
 
-            var tankAFertilizers = new[] { "KH2PO4", "NH4H2PO4", "(NH4)2HPO4", "K2HPO4.3H2O" };
-            foreach (var fert in tankAFertilizers)
+            var fertilizantesTanqueA = new[] { "KH2PO4", "NH4H2PO4", "(NH4)2HPO4", "K2HPO4.3H2O" };
+            foreach (var fert in fertilizantesTanqueA)
             {
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankA.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                    tankA.Concentrations_gL[fert] = concentratedAmount;
-                    tankA.FertilizerAmounts_kg[fert] = (concentratedAmount * tankA.Volume_L) / 1000.0;
+                    tanqueA.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                    tanqueA.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueA.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueA.Volumen_L) / 1000.0;
                 }
             }
 
-            // Tank B: Potassium and Magnesium
-            var tankB = tanks[1];
-            tankB.TankLabel = "B - K + Mg";
+            // Tanque B: Potasio y Magnesio
+            var tanqueB = tanques[1];
+            tanqueB.EtiquetaTanque = "B - K + Mg";
 
-            var tankBFertilizers = new[] { "KNO3", "K2SO4", "KCl", "MgSO4.7H2O", "MgCl2.6H2O" };
-            foreach (var fert in tankBFertilizers)
+            var fertilizantesTanqueB = new[] { "KNO3", "K2SO4", "KCl", "MgSO4.7H2O", "MgCl2.6H2O" };
+            foreach (var fert in fertilizantesTanqueB)
             {
-                // Continuation from DistributeInFourTanks method - Tank B section
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankB.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                    tankB.Concentrations_gL[fert] = concentratedAmount;
-                    tankB.FertilizerAmounts_kg[fert] = (concentratedAmount * tankB.Volume_L) / 1000.0;
+                    tanqueB.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                    tanqueB.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueB.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueB.Volumen_L) / 1000.0;
                 }
             }
 
-            // Tank C: Calcium
-            var tankC = tanks[2];
-            tankC.TankLabel = "C - Calcium";
+            // Tanque C: Calcio
+            var tanqueC = tanques[2];
+            tanqueC.EtiquetaTanque = "C - Calcio";
 
-            var tankCFertilizers = new[] { "Ca(NO3)2.2H2O", "CaCl2.6H2O" };
-            foreach (var fert in tankCFertilizers)
+            var fertilizantesTanqueC = new[] { "Ca(NO3)2.2H2O", "CaCl2.6H2O" };
+            foreach (var fert in fertilizantesTanqueC)
             {
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankC.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                    tankC.Concentrations_gL[fert] = concentratedAmount;
-                    tankC.FertilizerAmounts_kg[fert] = (concentratedAmount * tankC.Volume_L) / 1000.0;
+                    tanqueC.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                    tanqueC.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueC.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueC.Volumen_L) / 1000.0;
                 }
             }
 
-            // Tank D: Micronutrients and Acids
-            var tankD = tanks[3];
-            tankD.TankLabel = "D - Micros + Acids";
+            // Tanque D: Micronutrientes y Ácidos
+            var tanqueD = tanques[3];
+            tanqueD.EtiquetaTanque = "D - Micros + Ácidos";
 
-            var tankDFertilizers = new[] { "FeSO4.7H2O", "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3", "Na2MoO4.2H2O" };
-            foreach (var fert in tankDFertilizers)
+            var fertilizantesTanqueD = new[] { "FeSO4.7H2O", "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3", "Na2MoO4.2H2O" };
+            foreach (var fert in fertilizantesTanqueD)
             {
-                if (fertilizers.ContainsKey(fert))
+                if (fertilizantes.ContainsKey(fert))
                 {
-                    tankD.Fertilizers.Add(fert);
-                    double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                    tankD.Concentrations_gL[fert] = concentratedAmount;
-                    tankD.FertilizerAmounts_kg[fert] = (concentratedAmount * tankD.Volume_L) / 1000.0;
+                    tanqueD.Fertilizantes.Add(fert);
+                    double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                    tanqueD.Concentraciones_gL[fert] = cantidadConcentrada;
+                    tanqueD.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanqueD.Volumen_L) / 1000.0;
                 }
             }
 
-            tankD.Acids.AddRange(acids);
+            tanqueD.Acidos.AddRange(acidos);
         }
 
-        private void DistributeInMultipleTanks(List<TankDistribution> tanks, Dictionary<string, double> fertilizers, List<string> acids, int concentrationFactor)
+        private void DistribuirEnMultiplesTanques(List<DistribucionTanque> tanques, Dictionary<string, double> fertilizantes, List<string> acidos, int factorConcentracion)
         {
-            // For 5+ tanks, distribute each major fertilizer group separately
-            int tankIndex = 0;
+            // Para 5+ tanques, distribuir cada grupo principal de fertilizantes por separado
+            int indiceTanque = 0;
 
-            // Group fertilizers by compatibility
-            var fertilizerGroups = new[]
+            // Agrupar fertilizantes por compatibilidad
+            var gruposFertilizantes = new[]
             {
-                new { Name = "Nitrates", Fertilizers = new[] { "NH4NO3", "Ca(NO3)2.2H2O", "KNO3" } },
-                new { Name = "Phosphates", Fertilizers = new[] { "KH2PO4", "NH4H2PO4", "(NH4)2HPO4" } },
-                new { Name = "Sulfates", Fertilizers = new[] { "K2SO4", "MgSO4.7H2O", "(NH4)2SO4" } },
-                new { Name = "Chlorides", Fertilizers = new[] { "KCl", "CaCl2.6H2O", "MgCl2.6H2O" } },
-                new { Name = "Micronutrients", Fertilizers = new[] { "FeSO4.7H2O", "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3", "Na2MoO4.2H2O" } }
+                new { Nombre = "Nitratos", Fertilizantes = new[] { "NH4NO3", "Ca(NO3)2.2H2O", "KNO3" } },
+                new { Nombre = "Fosfatos", Fertilizantes = new[] { "KH2PO4", "NH4H2PO4", "(NH4)2HPO4" } },
+                new { Nombre = "Sulfatos", Fertilizantes = new[] { "K2SO4", "MgSO4.7H2O", "(NH4)2SO4" } },
+                new { Nombre = "Cloruros", Fertilizantes = new[] { "KCl", "CaCl2.6H2O", "MgCl2.6H2O" } },
+                new { Nombre = "Micronutrientes", Fertilizantes = new[] { "FeSO4.7H2O", "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3", "Na2MoO4.2H2O" } }
             };
 
-            foreach (var group in fertilizerGroups)
+            foreach (var grupo in gruposFertilizantes)
             {
-                if (tankIndex >= tanks.Count - 1) break; // Reserve last tank for acids
+                if (indiceTanque >= tanques.Count - 1) break; // Reservar último tanque para ácidos
 
-                var tank = tanks[tankIndex];
-                tank.TankLabel = $"{(char)('A' + tankIndex)} - {group.Name}";
+                var tanque = tanques[indiceTanque];
+                tanque.EtiquetaTanque = $"{(char)('A' + indiceTanque)} - {grupo.Nombre}";
 
-                foreach (var fert in group.Fertilizers)
+                foreach (var fert in grupo.Fertilizantes)
                 {
-                    if (fertilizers.ContainsKey(fert))
+                    if (fertilizantes.ContainsKey(fert))
                     {
-                        tank.Fertilizers.Add(fert);
-                        double concentratedAmount = fertilizers[fert] * concentrationFactor / 1000.0;
-                        tank.Concentrations_gL[fert] = concentratedAmount;
-                        tank.FertilizerAmounts_kg[fert] = (concentratedAmount * tank.Volume_L) / 1000.0;
+                        tanque.Fertilizantes.Add(fert);
+                        double cantidadConcentrada = fertilizantes[fert] * factorConcentracion / 1000.0;
+                        tanque.Concentraciones_gL[fert] = cantidadConcentrada;
+                        tanque.CantidadesFertilizante_kg[fert] = (cantidadConcentrada * tanque.Volumen_L) / 1000.0;
                     }
                 }
 
-                if (tank.Fertilizers.Any())
+                if (tanque.Fertilizantes.Any())
                 {
-                    tankIndex++;
+                    indiceTanque++;
                 }
             }
 
-            // Last tank for acids
-            if (tanks.Count > 0 && acids.Any())
+            // Último tanque para ácidos
+            if (tanques.Count > 0 && acidos.Any())
             {
-                var acidTank = tanks[tanks.Count - 1];
-                acidTank.TankLabel = "Acid Tank";
-                acidTank.Acids.AddRange(acids);
+                var tanqueAcido = tanques[tanques.Count - 1];
+                tanqueAcido.EtiquetaTanque = "Tanque de Ácidos";
+                tanqueAcido.Acidos.AddRange(acidos);
             }
         }
 
-        private string GetTankLabel(int index)
+        private string ObtenerEtiquetaTanque(int indice)
         {
-            return index < 8 ? ((char)('A' + index)).ToString() : $"Tank {index + 1}";
+            return indice < 8 ? ((char)('A' + indice)).ToString() : $"Tanque {indice + 1}";
         }
 
-        private void CheckTankCompatibility(TankDistribution tank)
+        private void VerificarCompatibilidadTanque(DistribucionTanque tanque)
         {
-            var fertilizers = tank.Fertilizers;
+            var fertilizantes = tanque.Fertilizantes;
 
-            for (int i = 0; i < fertilizers.Count; i++)
+            for (int i = 0; i < fertilizantes.Count; i++)
             {
-                for (int j = i + 1; j < fertilizers.Count; j++)
+                for (int j = i + 1; j < fertilizantes.Count; j++)
                 {
-                    var fert1 = fertilizers[i];
-                    var fert2 = fertilizers[j];
+                    var fert1 = fertilizantes[i];
+                    var fert2 = fertilizantes[j];
 
-                    if (compatibilityMatrix.ContainsKey((fert1, fert2)))
+                    if (matrizCompatibilidad.ContainsKey((fert1, fert2)))
                     {
-                        var compatibility = compatibilityMatrix[(fert1, fert2)];
+                        var compatibilidad = matrizCompatibilidad[(fert1, fert2)];
 
-                        switch (compatibility)
+                        switch (compatibilidad)
                         {
-                            case CompatibilityLevel.I:
-                                tank.CompatibilityWarnings.Add($"🚫 INCOMPATIBLE: {fert1} and {fert2} cannot be mixed - will precipitate");
+                            case NivelCompatibilidad.I:
+                                tanque.AdvertenciasCompatibilidad.Add($"🚫 INCOMPATIBLE: {fert1} y {fert2} no se pueden mezclar - precipitarán");
                                 break;
-                            case CompatibilityLevel.E:
-                                tank.CompatibilityWarnings.Add($"⚠️ CAUTION: {fert1} and {fert2} compatible only in water at injection time");
+                            case NivelCompatibilidad.E:
+                                tanque.AdvertenciasCompatibilidad.Add($"⚠️ PRECAUCIÓN: {fert1} y {fert2} compatibles solo en agua al momento de inyección");
                                 break;
-                            case CompatibilityLevel.L:
-                                tank.CompatibilityWarnings.Add($"⚠️ LIMITED: {fert1} and {fert2} have limited compatibility - use reduced amounts");
+                            case NivelCompatibilidad.L:
+                                tanque.AdvertenciasCompatibilidad.Add($"⚠️ LIMITADO: {fert1} y {fert2} tienen compatibilidad limitada - usar cantidades reducidas");
                                 break;
-                            case CompatibilityLevel.P:
-                                tank.CompatibilityWarnings.Add($"🔥 DANGEROUS: {fert1} and {fert2} generate heat - add acid to water carefully");
+                            case NivelCompatibilidad.P:
+                                tanque.AdvertenciasCompatibilidad.Add($"🔥 PELIGROSO: {fert1} y {fert2} generan calor - agregar ácido al agua cuidadosamente");
                                 break;
                         }
                     }
@@ -723,347 +723,347 @@ namespace HydroponicCalculator.Modules
             }
         }
 
-        private void CheckTankSolubility(TankDistribution tank, int concentrationFactor)
+        private void VerificarSolubilidadTanque(DistribucionTanque tanque, int factorConcentracion)
         {
-            foreach (var fertilizer in tank.Concentrations_gL)
+            foreach (var fertilizante in tanque.Concentraciones_gL)
             {
-                if (fertilizerSolubilities.ContainsKey(fertilizer.Key))
+                if (solubilidadesFertilizantes.ContainsKey(fertilizante.Key))
                 {
-                    var solubility = fertilizerSolubilities[fertilizer.Key];
-                    var concentration = fertilizer.Value;
+                    var solubilidad = solubilidadesFertilizantes[fertilizante.Key];
+                    var concentracion = fertilizante.Value;
 
-                    if (concentration > solubility.SafeConcentrationLimit)
+                    if (concentracion > solubilidad.LimiteConcentracionSegura)
                     {
-                        tank.SolubilityWarnings.Add(
-                            $"🚫 SOLUBILITY RISK: {fertilizer.Key} concentration ({concentration:F1} g/L) " +
-                            $"exceeds safe limit ({solubility.SafeConcentrationLimit:F1} g/L). " +
-                            $"Maximum solubility: {solubility.Solubility_20C:F1} g/L at 20°C. " +
-                            $"Recommendation: Reduce concentration factor below 1:{concentrationFactor}"
+                        tanque.AdvertenciasSolubilidad.Add(
+                            $"🚫 RIESGO DE SOLUBILIDAD: {fertilizante.Key} concentración ({concentracion:F1} g/L) " +
+                            $"excede el límite seguro ({solubilidad.LimiteConcentracionSegura:F1} g/L). " +
+                            $"Solubilidad máxima: {solubilidad.Solubilidad_20C:F1} g/L a 20°C. " +
+                            $"Recomendación: Reducir factor de concentración por debajo de 1:{factorConcentracion}"
                         );
                     }
-                    else if (concentration > solubility.RecommendedMaxConcentration)
+                    else if (concentracion > solubilidad.ConcentracionMaximaRecomendada)
                     {
-                        tank.SolubilityWarnings.Add(
-                            $"⚠️ CAUTION: {fertilizer.Key} concentration ({concentration:F1} g/L) " +
-                            $"approaches safe limit. Recommended max: {solubility.RecommendedMaxConcentration:F1} g/L"
+                        tanque.AdvertenciasSolubilidad.Add(
+                            $"⚠️ PRECAUCIÓN: {fertilizante.Key} concentración ({concentracion:F1} g/L) " +
+                            $"se acerca al límite seguro. Máximo recomendado: {solubilidad.ConcentracionMaximaRecomendada:F1} g/L"
                         );
                     }
                 }
             }
         }
 
-        private void CalculateTankDensity(TankDistribution tank)
+        private void CalcularDensidadTanque(DistribucionTanque tanque)
         {
-            tank.TotalDensity_gL = tank.Concentrations_gL.Values.Sum();
+            tanque.DensidadTotal_gL = tanque.Concentraciones_gL.Values.Sum();
         }
 
-        private void CalculateTankCost(TankDistribution tank)
+        private void CalcularCostoTanque(DistribucionTanque tanque)
         {
-            double totalCost = 0;
+            double costoTotal = 0;
 
-            foreach (var fertilizer in tank.FertilizerAmounts_kg)
+            foreach (var fertilizante in tanque.CantidadesFertilizante_kg)
             {
-                if (fertilizerCosts.ContainsKey(fertilizer.Key))
+                if (costosFertilizantes.ContainsKey(fertilizante.Key))
                 {
-                    totalCost += fertilizer.Value * fertilizerCosts[fertilizer.Key];
+                    costoTotal += fertilizante.Value * costosFertilizantes[fertilizante.Key];
                 }
             }
 
-            tank.EstimatedCost = totalCost;
+            tanque.CostoEstimado = costoTotal;
         }
 
-        private void GeneratePreparationInstructions(TankDistribution tank)
+        private void GenerarInstruccionesPreparacion(DistribucionTanque tanque)
         {
-            tank.PreparationInstructions.Clear();
+            tanque.InstruccionesPreparacion.Clear();
 
-            tank.PreparationInstructions.Add($"🏷️ Tank {tank.TankLabel} ({tank.TankColor}) - {tank.Volume_L}L");
-            tank.PreparationInstructions.Add("📋 Preparation sequence:");
-            tank.PreparationInstructions.Add("1. Fill tank with clean water to 80% capacity");
-            tank.PreparationInstructions.Add("2. Start mixing/circulation system");
+            tanque.InstruccionesPreparacion.Add($"🏷️ Tanque {tanque.EtiquetaTanque} ({tanque.ColorTanque}) - {tanque.Volumen_L}L");
+            tanque.InstruccionesPreparacion.Add("📋 Secuencia de preparación:");
+            tanque.InstruccionesPreparacion.Add("1. Llenar tanque con agua limpia al 80% de capacidad");
+            tanque.InstruccionesPreparacion.Add("2. Iniciar sistema de mezcla/circulación");
 
-            // Add fertilizers in order of solubility (most soluble first)
-            var orderedFertilizers = tank.Fertilizers
-                .Where(f => fertilizerSolubilities.ContainsKey(f))
-                .OrderByDescending(f => fertilizerSolubilities[f].Solubility_20C)
+            // Agregar fertilizantes en orden de solubilidad (más soluble primero)
+            var fertilizantesOrdenados = tanque.Fertilizantes
+                .Where(f => solubilidadesFertilizantes.ContainsKey(f))
+                .OrderByDescending(f => solubilidadesFertilizantes[f].Solubilidad_20C)
                 .ToList();
 
-            int step = 3;
-            foreach (var fertilizer in orderedFertilizers)
+            int paso = 3;
+            foreach (var fertilizante in fertilizantesOrdenados)
             {
-                if (tank.FertilizerAmounts_kg.ContainsKey(fertilizer))
+                if (tanque.CantidadesFertilizante_kg.ContainsKey(fertilizante))
                 {
-                    double amount = tank.FertilizerAmounts_kg[fertilizer];
-                    tank.PreparationInstructions.Add($"{step}. Add {amount:F2} kg of {fertilizer} slowly while mixing");
-                    tank.PreparationInstructions.Add($"   Wait for complete dissolution before next addition");
-                    step++;
+                    double cantidad = tanque.CantidadesFertilizante_kg[fertilizante];
+                    tanque.InstruccionesPreparacion.Add($"{paso}. Agregar {cantidad:F2} kg de {fertilizante} lentamente mientras se mezcla");
+                    tanque.InstruccionesPreparacion.Add($"   Esperar disolución completa antes de la siguiente adición");
+                    paso++;
                 }
             }
 
-            // Add acids last
-            foreach (var acid in tank.Acids)
+            // Agregar ácidos al final
+            foreach (var acido in tanque.Acidos)
             {
-                tank.PreparationInstructions.Add($"{step}. CAREFULLY add {acid} (ALWAYS acid to water, never water to acid)");
-                step++;
+                tanque.InstruccionesPreparacion.Add($"{paso}. AGREGAR CUIDADOSAMENTE {acido} (SIEMPRE ácido al agua, nunca agua al ácido)");
+                paso++;
             }
 
-            tank.PreparationInstructions.Add($"{step}. Fill to final volume ({tank.Volume_L}L)");
-            tank.PreparationInstructions.Add($"{step + 1}. Check pH and EC before use");
-            tank.PreparationInstructions.Add("⚠️ Safety: Wear gloves, goggles, and ensure good ventilation");
+            tanque.InstruccionesPreparacion.Add($"{paso}. Llenar al volumen final ({tanque.Volumen_L}L)");
+            tanque.InstruccionesPreparacion.Add($"{paso + 1}. Verificar pH y CE antes del uso");
+            tanque.InstruccionesPreparacion.Add("⚠️ Seguridad: Usar guantes, gafas y asegurar buena ventilación");
         }
 
-        public Dictionary<string, double> CalculateVolumeRequirements(
-            Dictionary<string, double> fertilizerConcentrations_mgL,
-            int concentrationFactor,
-            double tankVolume_L,
-            double targetDilutedVolume_L)
+        public Dictionary<string, double> CalcularRequerimientosVolumen(
+            Dictionary<string, double> concentracionesFertilizantes_mgL,
+            int factorConcentracion,
+            double volumenTanque_L,
+            double volumenDiluidoObjetivo_L)
         {
-            var results = new Dictionary<string, double>();
+            var resultados = new Dictionary<string, double>();
 
-            // Calculate total concentrated solution needed
-            double concentratedVolumeNeeded_L = targetDilutedVolume_L / concentrationFactor;
-            results["ConcentratedVolumeNeeded_L"] = concentratedVolumeNeeded_L;
+            // Calcular solución concentrada total necesaria
+            double volumenConcentradoNecesario_L = volumenDiluidoObjetivo_L / factorConcentracion;
+            resultados["VolumenConcentradoNecesario_L"] = volumenConcentradoNecesario_L;
 
-            // Calculate number of tank preparations needed
-            double tankPreparationsNeeded = Math.Ceiling(concentratedVolumeNeeded_L / tankVolume_L);
-            results["TankPreparationsNeeded"] = tankPreparationsNeeded;
+            // Calcular número de preparaciones de tanque necesarias
+            double preparacionesTanqueNecesarias = Math.Ceiling(volumenConcentradoNecesario_L / volumenTanque_L);
+            resultados["PreparacionesTanqueNecesarias"] = preparacionesTanqueNecesarias;
 
-            // Calculate total fertilizer amounts needed
-            foreach (var fertilizer in fertilizerConcentrations_mgL)
+            // Calcular cantidades totales de fertilizantes necesarias
+            foreach (var fertilizante in concentracionesFertilizantes_mgL)
             {
-                double totalAmount_kg = (fertilizer.Value * concentratedVolumeNeeded_L * concentrationFactor) / 1000000.0;
-                results[$"{fertilizer.Key}_Total_kg"] = totalAmount_kg;
+                double cantidadTotal_kg = (fertilizante.Value * volumenConcentradoNecesario_L * factorConcentracion) / 1000000.0;
+                resultados[$"{fertilizante.Key}_Total_kg"] = cantidadTotal_kg;
             }
 
-            results["TankVolume_L"] = tankVolume_L;
-            results["TargetDilutedVolume_L"] = targetDilutedVolume_L;
-            results["ConcentrationFactor"] = concentrationFactor;
-            results["InjectionRate_LperM3"] = 1000.0 / concentrationFactor;
+            resultados["VolumenTanque_L"] = volumenTanque_L;
+            resultados["VolumenDiluidoObjetivo_L"] = volumenDiluidoObjetivo_L;
+            resultados["FactorConcentracion"] = factorConcentracion;
+            resultados["TasaInyeccion_LporM3"] = 1000.0 / factorConcentracion;
 
-            return results;
+            return resultados;
         }
 
-        public ConcentratedSolutionReport GenerateCompleteReport(
-            Dictionary<string, double> fertilizerConcentrations_mgL,
-            List<string> acidTypes,
-            int numberOfTanks,
-            int concentrationFactor,
-            double tankVolume_L,
-            double targetDilutedVolume_L)
+        public ReporteSolucionConcentrada GenerarReporteCompleto(
+            Dictionary<string, double> concentracionesFertilizantes_mgL,
+            List<string> tiposAcidos,
+            int numeroDeTanques,
+            int factorConcentracion,
+            double volumenTanque_L,
+            double volumenDiluidoObjetivo_L)
         {
-            var report = new ConcentratedSolutionReport();
+            var reporte = new ReporteSolucionConcentrada();
 
-            // Basic parameters
-            report.NumberOfTanks = numberOfTanks;
-            report.ConcentrationFactor = GetConcentrationFactor(concentrationFactor);
+            // Parámetros básicos
+            reporte.NumeroDeTanques = numeroDeTanques;
+            reporte.FactorConcentracion = ObtenerFactorConcentracion(factorConcentracion);
 
-            // Distribute fertilizers
-            report.Tanks = DistributeFertilizers(fertilizerConcentrations_mgL, acidTypes, numberOfTanks, concentrationFactor, tankVolume_L);
+            // Distribuir fertilizantes
+            reporte.Tanques = DistribuirFertilizantes(concentracionesFertilizantes_mgL, tiposAcidos, numeroDeTanques, factorConcentracion, volumenTanque_L);
 
-            // Calculate volume requirements
-            report.VolumeRequirements = CalculateVolumeRequirements(fertilizerConcentrations_mgL, concentrationFactor, tankVolume_L, targetDilutedVolume_L);
+            // Calcular requerimientos de volumen
+            reporte.RequerimientosVolumen = CalcularRequerimientosVolumen(concentracionesFertilizantes_mgL, factorConcentracion, volumenTanque_L, volumenDiluidoObjetivo_L);
 
-            // Calculate costs
-            report.TotalCost = report.Tanks.Sum(t => t.EstimatedCost);
-            report.CostPerM3_DilutedSolution = report.TotalCost / (targetDilutedVolume_L / 1000.0);
+            // Calcular costos
+            reporte.CostoTotal = reporte.Tanques.Sum(t => t.CostoEstimado);
+            reporte.CostoPorM3_SolucionDiluida = reporte.CostoTotal / (volumenDiluidoObjetivo_L / 1000.0);
 
-            // Calculate fertilizer totals
-            foreach (var tank in report.Tanks)
+            // Calcular totales de fertilizantes
+            foreach (var tanque in reporte.Tanques)
             {
-                foreach (var fertilizer in tank.FertilizerAmounts_kg)
+                foreach (var fertilizante in tanque.CantidadesFertilizante_kg)
                 {
-                    if (!report.FertilizerTotals_kg.ContainsKey(fertilizer.Key))
-                        report.FertilizerTotals_kg[fertilizer.Key] = 0;
-                    report.FertilizerTotals_kg[fertilizer.Key] += fertilizer.Value;
+                    if (!reporte.TotalesFertilizante_kg.ContainsKey(fertilizante.Key))
+                        reporte.TotalesFertilizante_kg[fertilizante.Key] = 0;
+                    reporte.TotalesFertilizante_kg[fertilizante.Key] += fertilizante.Value;
                 }
             }
 
-            // Generate warnings and recommendations
-            GenerateWarningsAndRecommendations(report);
+            // Generar advertencias y recomendaciones
+            GenerarAdvertenciasYRecomendaciones(reporte);
 
-            return report;
+            return reporte;
         }
 
-        private void GenerateWarningsAndRecommendations(ConcentratedSolutionReport report)
+        private void GenerarAdvertenciasYRecomendaciones(ReporteSolucionConcentrada reporte)
         {
-            // Critical warnings
-            foreach (var tank in report.Tanks)
+            // Advertencias críticas
+            foreach (var tanque in reporte.Tanques)
             {
-                report.CriticalWarnings.AddRange(tank.CompatibilityWarnings.Where(w => w.Contains("INCOMPATIBLE")));
-                report.CriticalWarnings.AddRange(tank.SolubilityWarnings.Where(w => w.Contains("SOLUBILITY RISK")));
+                reporte.AdvertenciasCriticas.AddRange(tanque.AdvertenciasCompatibilidad.Where(w => w.Contains("INCOMPATIBLE")));
+                reporte.AdvertenciasCriticas.AddRange(tanque.AdvertenciasSolubilidad.Where(w => w.Contains("RIESGO DE SOLUBILIDAD")));
             }
 
-            // General recommendations
-            report.GeneralRecommendations.Add("Always prepare fresh solutions and use within 2-3 days");
-            report.GeneralRecommendations.Add("Store concentrated solutions in cool, dark places");
-            report.GeneralRecommendations.Add("Check pH and EC of final diluted solution before application");
-            report.GeneralRecommendations.Add("Maintain injection equipment regularly to ensure accurate dilution ratios");
+            // Recomendaciones generales
+            reporte.RecomendacionesGenerales.Add("Siempre preparar soluciones frescas y usar dentro de 2-3 días");
+            reporte.RecomendacionesGenerales.Add("Almacenar soluciones concentradas en lugares frescos y oscuros");
+            reporte.RecomendacionesGenerales.Add("Verificar pH y CE de la solución diluida final antes de la aplicación");
+            reporte.RecomendacionesGenerales.Add("Mantener el equipo de inyección regularmente para asegurar proporciones de dilución precisas");
 
-            if (report.ConcentrationFactor.Factor > 200)
+            if (reporte.FactorConcentracion.Factor > 200)
             {
-                report.GeneralRecommendations.Add("High concentration factor - monitor for precipitation during storage");
+                reporte.RecomendacionesGenerales.Add("Factor de alta concentración - monitorear precipitación durante almacenamiento");
             }
 
-            if (report.NumberOfTanks == 2)
+            if (reporte.NumeroDeTanques == 2)
             {
-                report.GeneralRecommendations.Add("Two-tank system: Ensure acids are properly separated from calcium sources");
+                reporte.RecomendacionesGenerales.Add("Sistema de dos tanques: Asegurar que los ácidos estén correctamente separados de las fuentes de calcio");
             }
 
-            // Cost optimization suggestions
-            if (report.CostPerM3_DilutedSolution > 5.0)
+            // Sugerencias de optimización de costos
+            if (reporte.CostoPorM3_SolucionDiluida > 5.0)
             {
-                report.GeneralRecommendations.Add("Consider bulk purchasing of fertilizers to reduce costs");
+                reporte.RecomendacionesGenerales.Add("Considerar compras al por mayor de fertilizantes para reducir costos");
             }
         }
 
-        public List<string> ValidateConcentrationFactorForSolubility(
-            Dictionary<string, double> fertilizerConcentrations_mgL,
-            int concentrationFactor)
+        public List<string> ValidarFactorConcentracionParaSolubilidad(
+            Dictionary<string, double> concentracionesFertilizantes_mgL,
+            int factorConcentracion)
         {
-            var warnings = new List<string>();
+            var advertencias = new List<string>();
 
-            foreach (var fertilizer in fertilizerConcentrations_mgL)
+            foreach (var fertilizante in concentracionesFertilizantes_mgL)
             {
-                if (fertilizerSolubilities.ContainsKey(fertilizer.Key))
+                if (solubilidadesFertilizantes.ContainsKey(fertilizante.Key))
                 {
-                    var solubility = fertilizerSolubilities[fertilizer.Key];
-                    double concentratedAmount_gL = fertilizer.Value * concentrationFactor / 1000.0;
+                    var solubilidad = solubilidadesFertilizantes[fertilizante.Key];
+                    double cantidadConcentrada_gL = fertilizante.Value * factorConcentracion / 1000.0;
 
-                    if (concentratedAmount_gL > solubility.SafeConcentrationLimit)
+                    if (cantidadConcentrada_gL > solubilidad.LimiteConcentracionSegura)
                     {
-                        warnings.Add($"⚠️ {fertilizer.Key}: Concentration factor 1:{concentrationFactor} " +
-                                   $"results in {concentratedAmount_gL:F1} g/L, exceeding safe limit of {solubility.SafeConcentrationLimit:F1} g/L");
+                        advertencias.Add($"⚠️ {fertilizante.Key}: Factor de concentración 1:{factorConcentracion} " +
+                                       $"resulta en {cantidadConcentrada_gL:F1} g/L, excediendo el límite seguro de {solubilidad.LimiteConcentracionSegura:F1} g/L");
                     }
                 }
             }
 
-            return warnings;
+            return advertencias;
         }
 
-        public int SuggestOptimalConcentrationFactor(Dictionary<string, double> fertilizerConcentrations_mgL)
+        public int SugerirFactorConcentracionOptimo(Dictionary<string, double> concentracionesFertilizantes_mgL)
         {
-            int maxSafeFactor = 400; // Start with maximum
+            int factorMaximoSeguro = 400; // Comenzar con el máximo
 
-            foreach (var fertilizer in fertilizerConcentrations_mgL)
+            foreach (var fertilizante in concentracionesFertilizantes_mgL)
             {
-                if (fertilizerSolubilities.ContainsKey(fertilizer.Key))
+                if (solubilidadesFertilizantes.ContainsKey(fertilizante.Key))
                 {
-                    var solubility = fertilizerSolubilities[fertilizer.Key];
+                    var solubilidad = solubilidadesFertilizantes[fertilizante.Key];
 
-                    // Calculate maximum safe concentration factor for this fertilizer
-                    int safeFactor = (int)(solubility.RecommendedMaxConcentration * 1000.0 / fertilizer.Value);
-                    maxSafeFactor = Math.Min(maxSafeFactor, safeFactor);
+                    // Calcular factor de concentración máximo seguro para este fertilizante
+                    int factorSeguro = (int)(solubilidad.ConcentracionMaximaRecomendada * 1000.0 / fertilizante.Value);
+                    factorMaximoSeguro = Math.Min(factorMaximoSeguro, factorSeguro);
                 }
             }
 
-            // Round down to nearest standard concentration factor
-            var standardFactors = concentrationFactors.Select(cf => cf.Factor).OrderBy(f => f).ToList();
-            return standardFactors.Where(f => f <= maxSafeFactor).LastOrDefault();
+            // Redondear hacia abajo al factor de concentración estándar más cercano
+            var factoresEstandar = factoresConcentracion.Select(cf => cf.Factor).OrderBy(f => f).ToList();
+            return factoresEstandar.Where(f => f <= factorMaximoSeguro).LastOrDefault();
         }
 
-        public Dictionary<string, object> GetTankSummary(List<TankDistribution> tanks)
+        public Dictionary<string, object> ObtenerResumenTanques(List<DistribucionTanque> tanques)
         {
-            var summary = new Dictionary<string, object>();
+            var resumen = new Dictionary<string, object>();
 
-            summary["TotalTanks"] = tanks.Count;
-            summary["TotalFertilizerTypes"] = tanks.SelectMany(t => t.Fertilizers).Distinct().Count();
-            summary["TotalVolume_L"] = tanks.Sum(t => t.Volume_L);
-            summary["TotalCost"] = tanks.Sum(t => t.EstimatedCost);
-            summary["AverageDensity_gL"] = tanks.Average(t => t.TotalDensity_gL);
-            summary["TotalCompatibilityWarnings"] = tanks.Sum(t => t.CompatibilityWarnings.Count);
-            summary["TotalSolubilityWarnings"] = tanks.Sum(t => t.SolubilityWarnings.Count);
+            resumen["TotalTanques"] = tanques.Count;
+            resumen["TotalTiposFertilizantes"] = tanques.SelectMany(t => t.Fertilizantes).Distinct().Count();
+            resumen["VolumenTotal_L"] = tanques.Sum(t => t.Volumen_L);
+            resumen["CostoTotal"] = tanques.Sum(t => t.CostoEstimado);
+            resumen["DensidadPromedio_gL"] = tanques.Average(t => t.DensidadTotal_gL);
+            resumen["TotalAdvertenciasCompatibilidad"] = tanques.Sum(t => t.AdvertenciasCompatibilidad.Count);
+            resumen["TotalAdvertenciasSolubilidad"] = tanques.Sum(t => t.AdvertenciasSolubilidad.Count);
 
-            // Tank details
-            var tankDetails = tanks.Select(t => new
+            // Detalles de tanques
+            var detallesTanques = tanques.Select(t => new
             {
-                Label = t.TankLabel,
-                FertilizerCount = t.Fertilizers.Count,
-                Density_gL = t.TotalDensity_gL,
-                Cost = t.EstimatedCost,
-                HasWarnings = t.CompatibilityWarnings.Any() || t.SolubilityWarnings.Any()
+                Etiqueta = t.EtiquetaTanque,
+                CantidadFertilizantes = t.Fertilizantes.Count,
+                Densidad_gL = t.DensidadTotal_gL,
+                Costo = t.CostoEstimado,
+                TieneAdvertencias = t.AdvertenciasCompatibilidad.Any() || t.AdvertenciasSolubilidad.Any()
             }).ToList();
 
-            summary["TankDetails"] = tankDetails;
+            resumen["DetallesTanques"] = detallesTanques;
 
-            return summary;
+            return resumen;
         }
 
-        // Additional utility methods for advanced operations
-        public Dictionary<string, double> CalculateInjectionRates(
-            Dictionary<string, double> tankConcentrations_gL,
-            int concentrationFactor,
-            double targetFlow_Lh)
+        // Métodos utilitarios adicionales para operaciones avanzadas
+        public Dictionary<string, double> CalcularTasasInyeccion(
+            Dictionary<string, double> concentracionesTanque_gL,
+            int factorConcentracion,
+            double flujoObjetivo_Lh)
         {
-            var injectionRates = new Dictionary<string, double>();
+            var tasasInyeccion = new Dictionary<string, double>();
 
-            foreach (var tank in tankConcentrations_gL)
+            foreach (var tanque in concentracionesTanque_gL)
             {
-                // Calculate injection rate needed for this tank
-                double injectionRate_Lh = targetFlow_Lh / concentrationFactor;
-                injectionRates[tank.Key] = injectionRate_Lh;
+                // Calcular tasa de inyección necesaria para este tanque
+                double tasaInyeccion_Lh = flujoObjetivo_Lh / factorConcentracion;
+                tasasInyeccion[tanque.Key] = tasaInyeccion_Lh;
             }
 
-            return injectionRates;
+            return tasasInyeccion;
         }
 
-        public List<string> GenerateShoppingList(Dictionary<string, double> fertilizerTotals_kg)
+        public List<string> GenerarListaCompras(Dictionary<string, double> totalesFertilizantes_kg)
         {
-            var shoppingList = new List<string>();
+            var listaCompras = new List<string>();
 
-            shoppingList.Add("=== FERTILIZER SHOPPING LIST ===");
-            shoppingList.Add("");
+            listaCompras.Add("=== LISTA DE COMPRAS DE FERTILIZANTES ===");
+            listaCompras.Add("");
 
-            double totalCost = 0;
+            double costoTotal = 0;
 
-            foreach (var fertilizer in fertilizerTotals_kg.OrderBy(f => f.Key))
+            foreach (var fertilizante in totalesFertilizantes_kg.OrderBy(f => f.Key))
             {
-                double cost = fertilizerCosts.GetValueOrDefault(fertilizer.Key, 0) * fertilizer.Value;
-                totalCost += cost;
+                double costo = costosFertilizantes.GetValueOrDefault(fertilizante.Key, 0) * fertilizante.Value;
+                costoTotal += costo;
 
-                shoppingList.Add($"• {fertilizer.Key}: {fertilizer.Value:F2} kg (${cost:F2})");
+                listaCompras.Add($"• {fertilizante.Key}: {fertilizante.Value:F2} kg (${costo:F2})");
 
-                // Add chemical formula if available
-                if (fertilizerSolubilities.ContainsKey(fertilizer.Key))
+                // Agregar fórmula química si está disponible
+                if (solubilidadesFertilizantes.ContainsKey(fertilizante.Key))
                 {
-                    shoppingList.Add($"  Formula: {fertilizerSolubilities[fertilizer.Key].Formula}");
+                    listaCompras.Add($"  Fórmula: {solubilidadesFertilizantes[fertilizante.Key].Formula}");
                 }
             }
 
-            shoppingList.Add("");
-            shoppingList.Add($"TOTAL ESTIMATED COST: ${totalCost:F2}");
-            shoppingList.Add("");
-            shoppingList.Add("Notes:");
-            shoppingList.Add("- Prices are estimates and may vary by supplier");
-            shoppingList.Add("- Consider bulk discounts for large quantities");
-            shoppingList.Add("- Check expiration dates on micronutrients");
+            listaCompras.Add("");
+            listaCompras.Add($"COSTO TOTAL ESTIMADO: ${costoTotal:F2}");
+            listaCompras.Add("");
+            listaCompras.Add("Notas:");
+            listaCompras.Add("- Los precios son estimados y pueden variar según el proveedor");
+            listaCompras.Add("- Considere descuentos por volumen para grandes cantidades");
+            listaCompras.Add("- Verificar fechas de vencimiento en micronutrientes");
 
-            return shoppingList;
+            return listaCompras;
         }
 
-        public Dictionary<string, object> AnalyzeNutrientBalance(
-            Dictionary<string, double> finalConcentrations_mgL,
-            Dictionary<string, double> targetConcentrations_mgL)
+        public Dictionary<string, object> AnalizarEquilibrioNutrientes(
+            Dictionary<string, double> concentracionesFinales_mgL,
+            Dictionary<string, double> concentracionesObjetivo_mgL)
         {
-            var analysis = new Dictionary<string, object>();
-            var deviations = new Dictionary<string, double>();
-            var percentDeviations = new Dictionary<string, double>();
+            var analisis = new Dictionary<string, object>();
+            var desviaciones = new Dictionary<string, double>();
+            var desviacionesPorcentuales = new Dictionary<string, double>();
 
-            foreach (var target in targetConcentrations_mgL)
+            foreach (var objetivo in concentracionesObjetivo_mgL)
             {
-                double actual = finalConcentrations_mgL.GetValueOrDefault(target.Key, 0);
-                double deviation = actual - target.Value;
-                double percentDeviation = target.Value > 0 ? (deviation / target.Value) * 100 : 0;
+                double real = concentracionesFinales_mgL.GetValueOrDefault(objetivo.Key, 0);
+                double desviacion = real - objetivo.Value;
+                double desviacionPorcentual = objetivo.Value > 0 ? (desviacion / objetivo.Value) * 100 : 0;
 
-                deviations[target.Key] = deviation;
-                percentDeviations[target.Key] = percentDeviation;
+                desviaciones[objetivo.Key] = desviacion;
+                desviacionesPorcentuales[objetivo.Key] = desviacionPorcentual;
             }
 
-            analysis["Deviations_mgL"] = deviations;
-            analysis["PercentDeviations"] = percentDeviations;
-            analysis["MaxDeviation"] = deviations.Values.Max(Math.Abs);
-            analysis["AverageAbsDeviation"] = deviations.Values.Average(Math.Abs);
-            analysis["WithinTolerance"] = percentDeviations.Values.All(d => Math.Abs(d) <= 5.0);
+            analisis["Desviaciones_mgL"] = desviaciones;
+            analisis["DesviacionesPorcentuales"] = desviacionesPorcentuales;
+            analisis["MaximaDesviacion"] = desviaciones.Values.Max(Math.Abs);
+            analisis["DesviacionAbsolutaPromedio"] = desviaciones.Values.Average(Math.Abs);
+            analisis["DentroTolerancia"] = desviacionesPorcentuales.Values.All(d => Math.Abs(d) <= 5.0);
 
-            return analysis;
+            return analisis;
         }
     }
 }

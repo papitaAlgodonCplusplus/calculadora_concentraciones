@@ -3,208 +3,208 @@ using System.Collections.Generic;
 using System.Linq;
 #pragma warning disable CS8618
 
-namespace HydroponicCalculator.Modules
+namespace CalculadoraHidroponica.Modulos
 {
-    public class FertilizerCost
+    public class CostoFertilizante
     {
-        public string Name { get; set; }
-        public string Supplier { get; set; }
-        public double CostPerKg { get; set; }
-        public string Currency { get; set; } = "USD";
-        public double PackageSize_kg { get; set; }
-        public double CostPerPackage { get; set; }
-        public bool IsAvailable { get; set; } = true;
-        public DateTime LastUpdated { get; set; } = DateTime.Now;
-        public string Notes { get; set; }
+        public string Nombre { get; set; }
+        public string Proveedor { get; set; }
+        public double CostoPorKg { get; set; }
+        public string Moneda { get; set; } = "USD";
+        public double TamanoPaquete_kg { get; set; }
+        public double CostoPorPaquete { get; set; }
+        public bool EstaDisponible { get; set; } = true;
+        public DateTime UltimaActualizacion { get; set; } = DateTime.Now;
+        public string Notas { get; set; }
     }
 
-    public class NutrientCost
+    public class CostoNutriente
     {
-        public string Nutrient { get; set; }
-        public double CostPerKg_Nutrient { get; set; }
-        public string CheapestSource { get; set; }
-        public double TotalAmount_kg { get; set; }
-        public double TotalCost { get; set; }
-        public List<string> AlternativeSources { get; set; } = new List<string>();
+        public string Nutriente { get; set; }
+        public double CostoPorKg_Nutriente { get; set; }
+        public string FuenteMasBarata { get; set; }
+        public double CantidadTotal_kg { get; set; }
+        public double CostoTotal { get; set; }
+        public List<string> FuentesAlternativas { get; set; } = new List<string>();
     }
 
-    public class SolutionCostAnalysis
+    public class AnalisisCostoSolucion
     {
-        public double TotalCost_Concentrated { get; set; }
-        public double TotalCost_Diluted { get; set; }
-        public double CostPerLiter_Concentrated { get; set; }
-        public double CostPerLiter_Diluted { get; set; }
-        public double CostPerM3_Diluted { get; set; }
-        public Dictionary<string, double> CostByFertilizer { get; set; } = new Dictionary<string, double>();
-        public Dictionary<string, double> CostByNutrient { get; set; } = new Dictionary<string, double>();
-        public Dictionary<string, double> CostByTank { get; set; } = new Dictionary<string, double>();
-        public Dictionary<string, double> PercentageByFertilizer { get; set; } = new Dictionary<string, double>();
-        public Dictionary<string, double> PercentageByNutrient { get; set; } = new Dictionary<string, double>();
-        public List<string> CostOptimizationSuggestions { get; set; } = new List<string>();
+        public double CostoTotal_Concentrada { get; set; }
+        public double CostoTotal_Diluida { get; set; }
+        public double CostoPorLitro_Concentrada { get; set; }
+        public double CostoPorLitro_Diluida { get; set; }
+        public double CostoPorM3_Diluida { get; set; }
+        public Dictionary<string, double> CostoPorFertilizante { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> CostoPorNutriente { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> CostoPorTanque { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> PorcentajePorFertilizante { get; set; } = new Dictionary<string, double>();
+        public Dictionary<string, double> PorcentajePorNutriente { get; set; } = new Dictionary<string, double>();
+        public List<string> SugerenciasOptimizacionCosto { get; set; } = new List<string>();
     }
 
-    public class CostComparisonResult
+    public class ResultadoComparacionCosto
     {
-        public string FormulationName { get; set; }
-        public double TotalCost { get; set; }
-        public double CostPerM3 { get; set; }
-        public List<string> FertilizersUsed { get; set; } = new List<string>();
-        public Dictionary<string, double> NutrientDeviations { get; set; } = new Dictionary<string, double>();
-        public double QualityScore { get; set; } // Based on how close to target concentrations
-        public string Recommendation { get; set; }
+        public string NombreFormulacion { get; set; }
+        public double CostoTotal { get; set; }
+        public double CostoPorM3 { get; set; }
+        public List<string> FertilizantesUsados { get; set; } = new List<string>();
+        public Dictionary<string, double> DesviacionesNutrientes { get; set; } = new Dictionary<string, double>();
+        public double PuntuacionCalidad { get; set; } // Basado en qué tan cerca está de las concentraciones objetivo
+        public string Recomendacion { get; set; }
     }
 
-    public class CostAnalysisModule
+    public class ModuloAnalisisCostos
     {
-        private Dictionary<string, FertilizerCost> fertilizerCosts;
-        private Dictionary<string, List<string>> nutrientSources; // Which fertilizers provide each nutrient
+        private Dictionary<string, CostoFertilizante> costosFertilizantes;
+        private Dictionary<string, List<string>> fuentesNutrientes; // Qué fertilizantes proporcionan cada nutriente
 
-        public CostAnalysisModule()
+        public ModuloAnalisisCostos()
         {
-            InitializeFertilizerCosts();
-            InitializeNutrientSources();
+            InicializarCostosFertilizantes();
+            InicializarFuentesNutrientes();
         }
 
-        private void InitializeFertilizerCosts()
+        private void InicializarCostosFertilizantes()
         {
-            fertilizerCosts = new Dictionary<string, FertilizerCost>
+            costosFertilizantes = new Dictionary<string, CostoFertilizante>
             {
-                ["KH2PO4"] = new FertilizerCost
+                ["KH2PO4"] = new CostoFertilizante
                 {
-                    Name = "Monopotassium Phosphate",
-                    Supplier = "Generic",
-                    CostPerKg = 2.50,
-                    PackageSize_kg = 25,
-                    CostPerPackage = 62.50,
-                    IsAvailable = true,
-                    Notes = "High quality source for P and K"
+                    Nombre = "Fosfato Monopotásico",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 2.50,
+                    TamanoPaquete_kg = 25,
+                    CostoPorPaquete = 62.50,
+                    EstaDisponible = true,
+                    Notas = "Fuente de alta calidad para P y K"
                 },
-                ["Ca(NO3)2.2H2O"] = new FertilizerCost
+                ["Ca(NO3)2.2H2O"] = new CostoFertilizante
                 {
-                    Name = "Calcium Nitrate",
-                    Supplier = "Generic",
-                    CostPerKg = 0.80,
-                    PackageSize_kg = 25,
-                    CostPerPackage = 20.00,
-                    IsAvailable = true,
-                    Notes = "Primary Ca and N source"
+                    Nombre = "Nitrato de Calcio",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 0.80,
+                    TamanoPaquete_kg = 25,
+                    CostoPorPaquete = 20.00,
+                    EstaDisponible = true,
+                    Notas = "Fuente principal de Ca y N"
                 },
-                ["KNO3"] = new FertilizerCost
+                ["KNO3"] = new CostoFertilizante
                 {
-                    Name = "Potassium Nitrate",
-                    Supplier = "Generic",
-                    CostPerKg = 1.20,
-                    PackageSize_kg = 25,
-                    CostPerPackage = 30.00,
-                    IsAvailable = true,
-                    Notes = "Dual K and N source"
+                    Nombre = "Nitrato de Potasio",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 1.20,
+                    TamanoPaquete_kg = 25,
+                    CostoPorPaquete = 30.00,
+                    EstaDisponible = true,
+                    Notas = "Fuente dual de K y N"
                 },
-                ["K2SO4"] = new FertilizerCost
+                ["K2SO4"] = new CostoFertilizante
                 {
-                    Name = "Potassium Sulfate",
-                    Supplier = "Generic",
-                    CostPerKg = 1.50,
-                    PackageSize_kg = 25,
-                    CostPerPackage = 37.50,
-                    IsAvailable = true,
-                    Notes = "K and S source, low chloride"
+                    Nombre = "Sulfato de Potasio",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 1.50,
+                    TamanoPaquete_kg = 25,
+                    CostoPorPaquete = 37.50,
+                    EstaDisponible = true,
+                    Notas = "Fuente de K y S, bajo cloruro"
                 },
-                ["MgSO4.7H2O"] = new FertilizerCost
+                ["MgSO4.7H2O"] = new CostoFertilizante
                 {
-                    Name = "Magnesium Sulfate",
-                    Supplier = "Generic",
-                    CostPerKg = 0.60,
-                    PackageSize_kg = 25,
-                    CostPerPackage = 15.00,
-                    IsAvailable = true,
-                    Notes = "Epsom salt, Mg and S source"
+                    Nombre = "Sulfato de Magnesio",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 0.60,
+                    TamanoPaquete_kg = 25,
+                    CostoPorPaquete = 15.00,
+                    EstaDisponible = true,
+                    Notas = "Sal de Epsom, fuente de Mg y S"
                 },
-                ["NH4NO3"] = new FertilizerCost
+                ["NH4NO3"] = new CostoFertilizante
                 {
-                    Name = "Ammonium Nitrate",
-                    Supplier = "Generic",
-                    CostPerKg = 0.45,
-                    PackageSize_kg = 50,
-                    CostPerPackage = 22.50,
-                    IsAvailable = true,
-                    Notes = "Cheap N source, use with caution"
+                    Nombre = "Nitrato de Amonio",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 0.45,
+                    TamanoPaquete_kg = 50,
+                    CostoPorPaquete = 22.50,
+                    EstaDisponible = true,
+                    Notas = "Fuente barata de N, usar con precaución"
                 },
-                ["(NH4)2SO4"] = new FertilizerCost
+                ["(NH4)2SO4"] = new CostoFertilizante
                 {
-                    Name = "Ammonium Sulfate",
-                    Supplier = "Generic",
-                    CostPerKg = 0.50,
-                    PackageSize_kg = 50,
-                    CostPerPackage = 25.00,
-                    IsAvailable = true,
-                    Notes = "N and S source"
+                    Nombre = "Sulfato de Amonio",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 0.50,
+                    TamanoPaquete_kg = 50,
+                    CostoPorPaquete = 25.00,
+                    EstaDisponible = true,
+                    Notas = "Fuente de N y S"
                 },
-                ["FeSO4.7H2O"] = new FertilizerCost
+                ["FeSO4.7H2O"] = new CostoFertilizante
                 {
-                    Name = "Iron Sulfate",
-                    Supplier = "Generic",
-                    CostPerKg = 1.80,
-                    PackageSize_kg = 5,
-                    CostPerPackage = 9.00,
-                    IsAvailable = true,
-                    Notes = "Iron source, may need chelation"
+                    Nombre = "Sulfato de Hierro",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 1.80,
+                    TamanoPaquete_kg = 5,
+                    CostoPorPaquete = 9.00,
+                    EstaDisponible = true,
+                    Notas = "Fuente de hierro, puede necesitar quelación"
                 },
-                ["FeEDTA"] = new FertilizerCost
+                ["FeEDTA"] = new CostoFertilizante
                 {
-                    Name = "Iron EDTA Chelate",
-                    Supplier = "Generic",
-                    CostPerKg = 8.50,
-                    PackageSize_kg = 5,
-                    CostPerPackage = 42.50,
-                    IsAvailable = true,
-                    Notes = "Chelated iron, more expensive but stable"
+                    Nombre = "Quelato de Hierro EDTA",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 8.50,
+                    TamanoPaquete_kg = 5,
+                    CostoPorPaquete = 42.50,
+                    EstaDisponible = true,
+                    Notas = "Hierro quelado, más caro pero estable"
                 },
-                ["H3BO3"] = new FertilizerCost
+                ["H3BO3"] = new CostoFertilizante
                 {
-                    Name = "Boric Acid",
-                    Supplier = "Generic",
-                    CostPerKg = 3.20,
-                    PackageSize_kg = 5,
-                    CostPerPackage = 16.00,
-                    IsAvailable = true,
-                    Notes = "Boron source"
+                    Nombre = "Ácido Bórico",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 3.20,
+                    TamanoPaquete_kg = 5,
+                    CostoPorPaquete = 16.00,
+                    EstaDisponible = true,
+                    Notas = "Fuente de boro"
                 },
-                ["MnSO4.4H2O"] = new FertilizerCost
+                ["MnSO4.4H2O"] = new CostoFertilizante
                 {
-                    Name = "Manganese Sulfate",
-                    Supplier = "Generic",
-                    CostPerKg = 2.80,
-                    PackageSize_kg = 5,
-                    CostPerPackage = 14.00,
-                    IsAvailable = true,
-                    Notes = "Manganese source"
+                    Nombre = "Sulfato de Manganeso",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 2.80,
+                    TamanoPaquete_kg = 5,
+                    CostoPorPaquete = 14.00,
+                    EstaDisponible = true,
+                    Notas = "Fuente de manganeso"
                 },
-                ["ZnSO4.7H2O"] = new FertilizerCost
+                ["ZnSO4.7H2O"] = new CostoFertilizante
                 {
-                    Name = "Zinc Sulfate",
-                    Supplier = "Generic",
-                    CostPerKg = 3.50,
-                    PackageSize_kg = 5,
-                    CostPerPackage = 17.50,
-                    IsAvailable = true,
-                    Notes = "Zinc source"
+                    Nombre = "Sulfato de Zinc",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 3.50,
+                    TamanoPaquete_kg = 5,
+                    CostoPorPaquete = 17.50,
+                    EstaDisponible = true,
+                    Notas = "Fuente de zinc"
                 },
-                ["CuSO4.5H2O"] = new FertilizerCost
+                ["CuSO4.5H2O"] = new CostoFertilizante
                 {
-                    Name = "Copper Sulfate",
-                    Supplier = "Generic",
-                    CostPerKg = 4.20,
-                    PackageSize_kg = 5,
-                    CostPerPackage = 21.00,
-                    IsAvailable = true,
-                    Notes = "Copper source"
+                    Nombre = "Sulfato de Cobre",
+                    Proveedor = "Genérico",
+                    CostoPorKg = 4.20,
+                    TamanoPaquete_kg = 5,
+                    CostoPorPaquete = 21.00,
+                    EstaDisponible = true,
+                    Notas = "Fuente de cobre"
                 }
             };
         }
 
-        private void InitializeNutrientSources()
+        private void InicializarFuentesNutrientes()
         {
-            nutrientSources = new Dictionary<string, List<string>>
+            fuentesNutrientes = new Dictionary<string, List<string>>
             {
                 ["N"] = new List<string> { "Ca(NO3)2.2H2O", "KNO3", "NH4NO3", "(NH4)2SO4" },
                 ["P"] = new List<string> { "KH2PO4", "NH4H2PO4" },
@@ -221,109 +221,109 @@ namespace HydroponicCalculator.Modules
             };
         }
 
-        public SolutionCostAnalysis CalculateSolutionCost(
-            Dictionary<string, double> fertilizerAmounts_kg,
-            double concentratedVolume_L,
-            double dilutedVolume_L,
-            int concentrationFactor)
+        public AnalisisCostoSolucion CalcularCostoSolucion(
+            Dictionary<string, double> cantidadesFertilizantes_kg,
+            double volumenConcentrado_L,
+            double volumenDiluido_L,
+            int factorConcentracion)
         {
-            var analysis = new SolutionCostAnalysis();
+            var analisis = new AnalisisCostoSolucion();
 
-            // Calculate cost by fertilizer
-            double totalCost = 0;
-            foreach (var fertilizer in fertilizerAmounts_kg)
+            // Calcular costo por fertilizante
+            double costoTotal = 0;
+            foreach (var fertilizante in cantidadesFertilizantes_kg)
             {
-                if (fertilizerCosts.ContainsKey(fertilizer.Key))
+                if (costosFertilizantes.ContainsKey(fertilizante.Key))
                 {
-                    double cost = fertilizer.Value * fertilizerCosts[fertilizer.Key].CostPerKg;
-                    analysis.CostByFertilizer[fertilizer.Key] = cost;
-                    totalCost += cost;
+                    double costo = fertilizante.Value * costosFertilizantes[fertilizante.Key].CostoPorKg;
+                    analisis.CostoPorFertilizante[fertilizante.Key] = costo;
+                    costoTotal += costo;
                 }
             }
 
-            analysis.TotalCost_Concentrated = totalCost;
-            analysis.TotalCost_Diluted = totalCost; // Same total cost, just different volumes
-            analysis.CostPerLiter_Concentrated = concentratedVolume_L > 0 ? totalCost / concentratedVolume_L : 0;
-            analysis.CostPerLiter_Diluted = dilutedVolume_L > 0 ? totalCost / dilutedVolume_L : 0;
-            analysis.CostPerM3_Diluted = analysis.CostPerLiter_Diluted * 1000;
+            analisis.CostoTotal_Concentrada = costoTotal;
+            analisis.CostoTotal_Diluida = costoTotal; // Mismo costo total, solo volúmenes diferentes
+            analisis.CostoPorLitro_Concentrada = volumenConcentrado_L > 0 ? costoTotal / volumenConcentrado_L : 0;
+            analisis.CostoPorLitro_Diluida = volumenDiluido_L > 0 ? costoTotal / volumenDiluido_L : 0;
+            analisis.CostoPorM3_Diluida = analisis.CostoPorLitro_Diluida * 1000;
 
-            // Calculate percentages by fertilizer
-            if (totalCost > 0)
+            // Calcular porcentajes por fertilizante
+            if (costoTotal > 0)
             {
-                foreach (var cost in analysis.CostByFertilizer)
+                foreach (var costo in analisis.CostoPorFertilizante)
                 {
-                    analysis.PercentageByFertilizer[cost.Key] = (cost.Value / totalCost) * 100;
+                    analisis.PorcentajePorFertilizante[costo.Key] = (costo.Value / costoTotal) * 100;
                 }
             }
 
-            return analysis;
+            return analisis;
         }
 
-        public Dictionary<string, NutrientCost> AnalyzeNutrientCosts(
-            Dictionary<string, double> targetNutrients_mgL,
-            double volume_L)
+        public Dictionary<string, CostoNutriente> AnalizarCostosNutrientes(
+            Dictionary<string, double> nutrientesObjetivo_mgL,
+            double volumen_L)
         {
-            var nutrientCosts = new Dictionary<string, NutrientCost>();
+            var costosNutrientes = new Dictionary<string, CostoNutriente>();
 
-            foreach (var nutrient in targetNutrients_mgL)
+            foreach (var nutriente in nutrientesObjetivo_mgL)
             {
-                if (nutrientSources.ContainsKey(nutrient.Key))
+                if (fuentesNutrientes.ContainsKey(nutriente.Key))
                 {
-                    var sources = nutrientSources[nutrient.Key];
-                    var cheapestCost = FindCheapestNutrientSource(nutrient.Key, nutrient.Value, volume_L, sources);
+                    var fuentes = fuentesNutrientes[nutriente.Key];
+                    var costoMasBarato = EncontrarFuenteNutrienteMasBarata(nutriente.Key, nutriente.Value, volumen_L, fuentes);
 
-                    nutrientCosts[nutrient.Key] = new NutrientCost
+                    costosNutrientes[nutriente.Key] = new CostoNutriente
                     {
-                        Nutrient = nutrient.Key,
-                        CostPerKg_Nutrient = cheapestCost.costPerKg,
-                        CheapestSource = cheapestCost.source,
-                        TotalAmount_kg = (nutrient.Value * volume_L) / 1000000, // Convert mg to kg
-                        TotalCost = cheapestCost.totalCost,
-                        AlternativeSources = sources.Where(s => s != cheapestCost.source).ToList()
+                        Nutriente = nutriente.Key,
+                        CostoPorKg_Nutriente = costoMasBarato.costoPorKg,
+                        FuenteMasBarata = costoMasBarato.fuente,
+                        CantidadTotal_kg = (nutriente.Value * volumen_L) / 1000000, // Convertir mg a kg
+                        CostoTotal = costoMasBarato.costoTotal,
+                        FuentesAlternativas = fuentes.Where(s => s != costoMasBarato.fuente).ToList()
                     };
                 }
             }
 
-            return nutrientCosts;
+            return costosNutrientes;
         }
 
-        private (double costPerKg, string source, double totalCost) FindCheapestNutrientSource(
-            string nutrient, double concentration_mgL, double volume_L, List<string> sources)
+        private (double costoPorKg, string fuente, double costoTotal) EncontrarFuenteNutrienteMasBarata(
+            string nutriente, double concentracion_mgL, double volumen_L, List<string> fuentes)
         {
-            double cheapestCostPerKg = double.MaxValue;
-            string cheapestSource = "";
-            double cheapestTotalCost = double.MaxValue;
+            double costoPorKgMasBarato = double.MaxValue;
+            string fuenteMasBarata = "";
+            double costoTotalMasBarato = double.MaxValue;
 
-            foreach (var source in sources)
+            foreach (var fuente in fuentes)
             {
-                if (fertilizerCosts.ContainsKey(source))
+                if (costosFertilizantes.ContainsKey(fuente))
                 {
-                    var fertilizerCost = fertilizerCosts[source];
-                    double nutrientContent = GetNutrientContentPercentage(source, nutrient);
+                    var costoFertilizante = costosFertilizantes[fuente];
+                    double contenidoNutriente = ObtenerPorcentajeContenidoNutriente(fuente, nutriente);
 
-                    if (nutrientContent > 0)
+                    if (contenidoNutriente > 0)
                     {
-                        double costPerKgNutrient = fertilizerCost.CostPerKg / (nutrientContent / 100.0);
-                        double totalNutrientNeeded_kg = (concentration_mgL * volume_L) / 1000000.0;
-                        double totalCost = totalNutrientNeeded_kg * costPerKgNutrient;
+                        double costoPorKgNutriente = costoFertilizante.CostoPorKg / (contenidoNutriente / 100.0);
+                        double nutrienteTotalNecesario_kg = (concentracion_mgL * volumen_L) / 1000000.0;
+                        double costoTotal = nutrienteTotalNecesario_kg * costoPorKgNutriente;
 
-                        if (costPerKgNutrient < cheapestCostPerKg)
+                        if (costoPorKgNutriente < costoPorKgMasBarato)
                         {
-                            cheapestCostPerKg = costPerKgNutrient;
-                            cheapestSource = source;
-                            cheapestTotalCost = totalCost;
+                            costoPorKgMasBarato = costoPorKgNutriente;
+                            fuenteMasBarata = fuente;
+                            costoTotalMasBarato = costoTotal;
                         }
                     }
                 }
             }
 
-            return (cheapestCostPerKg, cheapestSource, cheapestTotalCost);
+            return (costoPorKgMasBarato, fuenteMasBarata, costoTotalMasBarato);
         }
 
-        private double GetNutrientContentPercentage(string fertilizer, string nutrient)
+        private double ObtenerPorcentajeContenidoNutriente(string fertilizante, string nutriente)
         {
-            // Simplified nutrient content percentages (in reality, these would be from a database)
-            var contents = new Dictionary<(string, string), double>
+            // Porcentajes simplificados de contenido de nutrientes (en realidad, estos vendrían de una base de datos)
+            var contenidos = new Dictionary<(string, string), double>
             {
                 { ("KH2PO4", "P"), 22.8 },
                 { ("KH2PO4", "K"), 28.7 },
@@ -346,231 +346,231 @@ namespace HydroponicCalculator.Modules
                 { ("CuSO4.5H2O", "Cu"), 25.5 }
             };
 
-            return contents.GetValueOrDefault((fertilizer, nutrient), 0);
+            return contenidos.GetValueOrDefault((fertilizante, nutriente), 0);
         }
 
-        public List<CostComparisonResult> CompareFormulations(
-            List<Dictionary<string, double>> formulations,
-            Dictionary<string, double> targetConcentrations,
-            double volume_L)
+        public List<ResultadoComparacionCosto> CompararFormulaciones(
+            List<Dictionary<string, double>> formulaciones,
+            Dictionary<string, double> concentracionesObjetivo,
+            double volumen_L)
         {
-            var comparisons = new List<CostComparisonResult>();
+            var comparaciones = new List<ResultadoComparacionCosto>();
 
-            for (int i = 0; i < formulations.Count; i++)
+            for (int i = 0; i < formulaciones.Count; i++)
             {
-                var formulation = formulations[i];
-                var comparison = new CostComparisonResult
+                var formulacion = formulaciones[i];
+                var comparacion = new ResultadoComparacionCosto
                 {
-                    FormulationName = $"Formulation {i + 1}",
-                    FertilizersUsed = formulation.Keys.ToList()
+                    NombreFormulacion = $"Formulación {i + 1}",
+                    FertilizantesUsados = formulacion.Keys.ToList()
                 };
 
-                // Calculate total cost
-                double totalCost = 0;
-                foreach (var fertilizer in formulation)
+                // Calcular costo total
+                double costoTotal = 0;
+                foreach (var fertilizante in formulacion)
                 {
-                    if (fertilizerCosts.ContainsKey(fertilizer.Key))
+                    if (costosFertilizantes.ContainsKey(fertilizante.Key))
                     {
-                        totalCost += (fertilizer.Value * volume_L / 1000) * fertilizerCosts[fertilizer.Key].CostPerKg;
+                        costoTotal += (fertilizante.Value * volumen_L / 1000) * costosFertilizantes[fertilizante.Key].CostoPorKg;
                     }
                 }
 
-                comparison.TotalCost = totalCost;
-                comparison.CostPerM3 = totalCost / (volume_L / 1000);
+                comparacion.CostoTotal = costoTotal;
+                comparacion.CostoPorM3 = costoTotal / (volumen_L / 1000);
 
-                // Calculate quality score based on target deviations
-                double qualityScore = CalculateQualityScore(formulation, targetConcentrations);
-                comparison.QualityScore = qualityScore;
+                // Calcular puntuación de calidad basada en desviaciones objetivo
+                double puntuacionCalidad = CalcularPuntuacionCalidad(formulacion, concentracionesObjetivo);
+                comparacion.PuntuacionCalidad = puntuacionCalidad;
 
-                // Generate recommendation
-                comparison.Recommendation = GenerateFormulationRecommendation(comparison);
+                // Generar recomendación
+                comparacion.Recomendacion = GenerarRecomendacionFormulacion(comparacion);
 
-                comparisons.Add(comparison);
+                comparaciones.Add(comparacion);
             }
 
-            return comparisons.OrderBy(c => c.CostPerM3).ToList();
+            return comparaciones.OrderBy(c => c.CostoPorM3).ToList();
         }
 
-        private double CalculateQualityScore(Dictionary<string, double> formulation, Dictionary<string, double> targets)
+        private double CalcularPuntuacionCalidad(Dictionary<string, double> formulacion, Dictionary<string, double> objetivos)
         {
-            // Simplified quality scoring - in reality would calculate actual nutrient delivery
-            double totalDeviation = 0;
-            int nutrientCount = 0;
+            // Puntuación de calidad simplificada - en realidad calcularía la entrega real de nutrientes
+            double desviacionTotal = 0;
+            int conteoNutrientes = 0;
 
-            foreach (var target in targets)
+            foreach (var objetivo in objetivos)
             {
-                // This is a simplified calculation - would need actual nutrient content calculation
-                double actualDelivery = EstimateNutrientDelivery(formulation, target.Key);
-                double deviation = Math.Abs(actualDelivery - target.Value) / target.Value;
-                totalDeviation += deviation;
-                nutrientCount++;
+                // Este es un cálculo simplificado - necesitaría cálculo real del contenido de nutrientes
+                double entregaReal = EstimarEntregaNutriente(formulacion, objetivo.Key);
+                double desviacion = Math.Abs(entregaReal - objetivo.Value) / objetivo.Value;
+                desviacionTotal += desviacion;
+                conteoNutrientes++;
             }
 
-            double averageDeviation = nutrientCount > 0 ? totalDeviation / nutrientCount : 1.0;
-            return Math.Max(0, 100 - (averageDeviation * 100)); // Score out of 100
+            double desviacionPromedio = conteoNutrientes > 0 ? desviacionTotal / conteoNutrientes : 1.0;
+            return Math.Max(0, 100 - (desviacionPromedio * 100)); // Puntuación sobre 100
         }
 
-        private double EstimateNutrientDelivery(Dictionary<string, double> formulation, string nutrient)
+        private double EstimarEntregaNutriente(Dictionary<string, double> formulacion, string nutriente)
         {
-            double totalDelivery = 0;
+            double entregaTotal = 0;
 
-            foreach (var fertilizer in formulation)
+            foreach (var fertilizante in formulacion)
             {
-                double content = GetNutrientContentPercentage(fertilizer.Key, nutrient);
-                totalDelivery += fertilizer.Value * (content / 100.0);
+                double contenido = ObtenerPorcentajeContenidoNutriente(fertilizante.Key, nutriente);
+                entregaTotal += fertilizante.Value * (contenido / 100.0);
             }
 
-            return totalDelivery;
+            return entregaTotal;
         }
 
-        private string GenerateFormulationRecommendation(CostComparisonResult comparison)
+        private string GenerarRecomendacionFormulacion(ResultadoComparacionCosto comparacion)
         {
-            if (comparison.QualityScore >= 95 && comparison.CostPerM3 <= 10)
-                return "Excellent: High quality and low cost";
-            else if (comparison.QualityScore >= 90)
-                return "Good: Meets nutrient targets well";
-            else if (comparison.CostPerM3 <= 5)
-                return "Economical: Low cost but check nutrient balance";
-            else if (comparison.QualityScore < 80)
-                return "Poor: Significant nutrient deviations";
+            if (comparacion.PuntuacionCalidad >= 95 && comparacion.CostoPorM3 <= 10)
+                return "Excelente: Alta calidad y bajo costo";
+            else if (comparacion.PuntuacionCalidad >= 90)
+                return "Buena: Cumple bien los objetivos de nutrientes";
+            else if (comparacion.CostoPorM3 <= 5)
+                return "Económica: Bajo costo pero verificar balance de nutrientes";
+            else if (comparacion.PuntuacionCalidad < 80)
+                return "Deficiente: Desviaciones significativas de nutrientes";
             else
-                return "Acceptable: Moderate cost and quality";
+                return "Aceptable: Costo y calidad moderados";
         }
 
-        public List<string> GenerateCostOptimizationSuggestions(
-            SolutionCostAnalysis analysis,
-            Dictionary<string, double> fertilizerAmounts)
+        public List<string> GenerarSugerenciasOptimizacionCosto(
+            AnalisisCostoSolucion analisis,
+            Dictionary<string, double> cantidadesFertilizantes)
         {
-            var suggestions = new List<string>();
+            var sugerencias = new List<string>();
 
-            // Find most expensive fertilizers
-            var expensiveFertilizers = analysis.PercentageByFertilizer
+            // Encontrar fertilizantes más caros
+            var fertilizantesCaros = analisis.PorcentajePorFertilizante
                 .Where(f => f.Value > 30)
                 .OrderByDescending(f => f.Value);
 
-            foreach (var expensive in expensiveFertilizers)
+            foreach (var caro in fertilizantesCaros)
             {
-                suggestions.Add($"{expensive.Key} represents {expensive.Value:F1}% of total cost. " +
-                               "Consider alternative sources or suppliers.");
+                sugerencias.Add($"{caro.Key} representa el {caro.Value:F1}% del costo total. " +
+                               "Considere fuentes alternativas o proveedores.");
             }
 
-            // Check for expensive micronutrients
-            var micronutrients = new[] { "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3" };
-            var expensiveMicros = analysis.CostByFertilizer
-                .Where(f => micronutrients.Contains(f.Key) &&
-                           analysis.PercentageByFertilizer[f.Key] > 10);
+            // Verificar micronutrientes caros
+            var micronutrientes = new[] { "FeEDTA", "MnSO4.4H2O", "ZnSO4.7H2O", "CuSO4.5H2O", "H3BO3" };
+            var microsCostosos = analisis.CostoPorFertilizante
+                .Where(f => micronutrientes.Contains(f.Key) &&
+                           analisis.PorcentajePorFertilizante[f.Key] > 10);
 
-            if (expensiveMicros.Any())
+            if (microsCostosos.Any())
             {
-                suggestions.Add("Micronutrients represent significant cost. " +
-                               "Consider using pre-mixed micronutrient blends or chelated forms.");
+                sugerencias.Add("Los micronutrientes representan un costo significativo. " +
+                               "Considere usar mezclas de micronutrientes premezcladas o formas queladas.");
             }
 
-            // Suggest bulk purchasing
-            foreach (var fertilizer in fertilizerAmounts.Where(f => f.Value > 50))
+            // Sugerir compras al por mayor
+            foreach (var fertilizante in cantidadesFertilizantes.Where(f => f.Value > 50))
             {
-                suggestions.Add($"Large quantity of {fertilizer.Key} needed ({fertilizer.Value:F1} kg). " +
-                               "Consider bulk purchasing for better rates.");
+                sugerencias.Add($"Gran cantidad de {fertilizante.Key} necesaria ({fertilizante.Value:F1} kg). " +
+                               "Considere compras al por mayor para mejores precios.");
             }
 
-            // General cost reduction suggestions
-            suggestions.Add("Compare prices from multiple suppliers regularly.");
-            suggestions.Add("Consider seasonal purchasing during low-demand periods.");
-            suggestions.Add("Evaluate generic vs. branded fertilizers for cost savings.");
+            // Sugerencias generales de reducción de costos
+            sugerencias.Add("Compare precios de múltiples proveedores regularmente.");
+            sugerencias.Add("Considere compras estacionales durante períodos de baja demanda.");
+            sugerencias.Add("Evalúe fertilizantes genéricos vs. de marca para ahorros en costos.");
 
-            return suggestions;
+            return sugerencias;
         }
 
-        public Dictionary<string, object> GenerateCostReport(
-            SolutionCostAnalysis costAnalysis,
-            Dictionary<string, NutrientCost> nutrientCosts,
-            double totalArea_m2,
-            double applicationsPerYear = 365)
+        public Dictionary<string, object> GenerarReporteCostos(
+            AnalisisCostoSolucion analisisCostos,
+            Dictionary<string, CostoNutriente> costosNutrientes,
+            double areaTotal_m2,
+            double aplicacionesPorAno = 365)
         {
-            var report = new Dictionary<string, object>();
+            var reporte = new Dictionary<string, object>();
 
-            // Summary costs
-            report["TotalCost_PerApplication"] = costAnalysis.TotalCost_Diluted;
-            report["CostPerM3_Diluted"] = costAnalysis.CostPerM3_Diluted;
-            report["CostPerM2_PerApplication"] = totalArea_m2 > 0 ? costAnalysis.TotalCost_Diluted / totalArea_m2 : 0;
-            report["AnnualCost_Total"] = costAnalysis.TotalCost_Diluted * applicationsPerYear;
-            report["AnnualCost_PerM2"] = totalArea_m2 > 0 ?
-                (costAnalysis.TotalCost_Diluted * applicationsPerYear) / totalArea_m2 : 0;
+            // Costos resumen
+            reporte["CostoTotal_PorAplicacion"] = analisisCostos.CostoTotal_Diluida;
+            reporte["CostoPorM3_Diluida"] = analisisCostos.CostoPorM3_Diluida;
+            reporte["CostoPorM2_PorAplicacion"] = areaTotal_m2 > 0 ? analisisCostos.CostoTotal_Diluida / areaTotal_m2 : 0;
+            reporte["CostoAnual_Total"] = analisisCostos.CostoTotal_Diluida * aplicacionesPorAno;
+            reporte["CostoAnual_PorM2"] = areaTotal_m2 > 0 ?
+                (analisisCostos.CostoTotal_Diluida * aplicacionesPorAno) / areaTotal_m2 : 0;
 
-            // Cost breakdown by fertilizer
-            var fertilizerBreakdown = costAnalysis.CostByFertilizer
+            // Desglose de costos por fertilizante
+            var desgloseFertilizantes = analisisCostos.CostoPorFertilizante
                 .OrderByDescending(f => f.Value)
                 .ToDictionary(f => f.Key, f => new
                 {
-                    Cost = f.Value,
-                    Percentage = costAnalysis.PercentageByFertilizer.GetValueOrDefault(f.Key, 0)
+                    Costo = f.Value,
+                    Porcentaje = analisisCostos.PorcentajePorFertilizante.GetValueOrDefault(f.Key, 0)
                 });
-            report["CostByFertilizer"] = fertilizerBreakdown;
+            reporte["CostoPorFertilizante"] = desgloseFertilizantes;
 
-            // Cost breakdown by nutrient
-            var nutrientBreakdown = nutrientCosts
-                .OrderByDescending(n => n.Value.TotalCost)
+            // Desglose de costos por nutriente
+            var desgloseNutrientes = costosNutrientes
+                .OrderByDescending(n => n.Value.CostoTotal)
                 .ToDictionary(n => n.Key, n => new
                 {
-                    CostPerKg_Nutrient = n.Value.CostPerKg_Nutrient,
-                    TotalCost = n.Value.TotalCost,
-                    CheapestSource = n.Value.CheapestSource,
-                    Amount_kg = n.Value.TotalAmount_kg
+                    CostoPorKg_Nutriente = n.Value.CostoPorKg_Nutriente,
+                    CostoTotal = n.Value.CostoTotal,
+                    FuenteMasBarata = n.Value.FuenteMasBarata,
+                    Cantidad_kg = n.Value.CantidadTotal_kg
                 });
-            report["CostByNutrient"] = nutrientBreakdown;
+            reporte["CostoPorNutriente"] = desgloseNutrientes;
 
-            // Cost efficiency metrics
-            report["MostExpensiveNutrient"] = nutrientCosts.OrderByDescending(n => n.Value.CostPerKg_Nutrient).FirstOrDefault().Key;
-            report["CheapestNutrient"] = nutrientCosts.OrderBy(n => n.Value.CostPerKg_Nutrient).FirstOrDefault().Key;
-            report["AverageNutrientCost_PerKg"] = nutrientCosts.Values.Average(n => n.CostPerKg_Nutrient);
+            // Métricas de eficiencia de costos
+            reporte["NutrienteMasCaro"] = costosNutrientes.OrderByDescending(n => n.Value.CostoPorKg_Nutriente).FirstOrDefault().Key;
+            reporte["NutrienteMasBarato"] = costosNutrientes.OrderBy(n => n.Value.CostoPorKg_Nutriente).FirstOrDefault().Key;
+            reporte["CostoPromedioNutriente_PorKg"] = costosNutrientes.Values.Average(n => n.CostoPorKg_Nutriente);
 
-            // Optimization suggestions
-            report["OptimizationSuggestions"] = costAnalysis.CostOptimizationSuggestions;
+            // Sugerencias de optimización
+            reporte["SugerenciasOptimizacion"] = analisisCostos.SugerenciasOptimizacionCosto;
 
-            return report;
+            return reporte;
         }
 
-        public void UpdateFertilizerCost(string fertilizerName, double newCostPerKg, string supplier = "")
+        public void ActualizarCostoFertilizante(string nombreFertilizante, double nuevoCostoPorKg, string proveedor = "")
         {
-            if (fertilizerCosts.ContainsKey(fertilizerName))
+            if (costosFertilizantes.ContainsKey(nombreFertilizante))
             {
-                fertilizerCosts[fertilizerName].CostPerKg = newCostPerKg;
-                fertilizerCosts[fertilizerName].LastUpdated = DateTime.Now;
-                if (!string.IsNullOrEmpty(supplier))
+                costosFertilizantes[nombreFertilizante].CostoPorKg = nuevoCostoPorKg;
+                costosFertilizantes[nombreFertilizante].UltimaActualizacion = DateTime.Now;
+                if (!string.IsNullOrEmpty(proveedor))
                 {
-                    fertilizerCosts[fertilizerName].Supplier = supplier;
+                    costosFertilizantes[nombreFertilizante].Proveedor = proveedor;
                 }
             }
             else
             {
-                // Add new fertilizer cost
-                fertilizerCosts[fertilizerName] = new FertilizerCost
+                // Agregar nuevo costo de fertilizante
+                costosFertilizantes[nombreFertilizante] = new CostoFertilizante
                 {
-                    Name = fertilizerName,
-                    Supplier = supplier ?? "Unknown",
-                    CostPerKg = newCostPerKg,
-                    IsAvailable = true,
-                    LastUpdated = DateTime.Now
+                    Nombre = nombreFertilizante,
+                    Proveedor = proveedor ?? "Desconocido",
+                    CostoPorKg = nuevoCostoPorKg,
+                    EstaDisponible = true,
+                    UltimaActualizacion = DateTime.Now
                 };
             }
         }
 
-        public Dictionary<string, FertilizerCost> GetAllFertilizerCosts()
+        public Dictionary<string, CostoFertilizante> ObtenerTodosCostosFertilizantes()
         {
-            return new Dictionary<string, FertilizerCost>(fertilizerCosts);
+            return new Dictionary<string, CostoFertilizante>(costosFertilizantes);
         }
 
-        public List<string> GetAlternativeFertilizers(string nutrient)
+        public List<string> ObtenerFertilizantesAlternativos(string nutriente)
         {
-            return nutrientSources.GetValueOrDefault(nutrient, new List<string>());
+            return fuentesNutrientes.GetValueOrDefault(nutriente, new List<string>());
         }
 
-        public double CalculateBreakEvenVolume(double setupCost, double costPerM3_Current, double costPerM3_Alternative)
+        public double CalcularVolumenEquilibrio(double costoConfiguracion, double costoPorM3_Actual, double costoPorM3_Alternativo)
         {
-            if (Math.Abs(costPerM3_Current - costPerM3_Alternative) < 0.001)
-                return double.MaxValue; // No savings possible
+            if (Math.Abs(costoPorM3_Actual - costoPorM3_Alternativo) < 0.001)
+                return double.MaxValue; // No es posible ahorrar
 
-            return setupCost / Math.Abs(costPerM3_Current - costPerM3_Alternative);
+            return costoConfiguracion / Math.Abs(costoPorM3_Actual - costoPorM3_Alternativo);
         }
     }
 }

@@ -3,80 +3,80 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using HydroponicCalculator.Modules;
+using CalculadoraHidroponica.Modulos;
 #pragma warning disable CS8618
 #pragma warning disable CS8622
 
-namespace HydroponicCalculator
+namespace CalculadoraHidroponica
 {
-    public partial class CompleteHydroponicCalculatorForm : Form
+    public partial class FormularioCalculadoraHidroponicaCompleta : Form
     {
-        // All modules
-        private WaterAnalysisModule waterModule;
-        private PHAdjustmentModule phModule;
-        private NutrientCalculatorAdvanced nutrientModule;
-        private SolutionVerificationModule verificationModule;
-        private ConcentratedSolutionsModule concentratedModule;
-        private CostAnalysisModule costModule;
+        // Todos los módulos
+        private ModuloAnalisisAgua moduloAgua;
+        private ModuloAjustePH moduloPh;
+        private CalculadoraNutrientesAvanzada moduloNutrientes;
+        private ModuloVerificacionSolucion moduloVerificacion;
+        private ModuloSolucionesConcentradas moduloConcentrados;
+        private ModuloAnalisisCostos moduloCostos;
 
-        // Data storage
-        private WaterQualityParameters waterData;
-        private Dictionary<string, double> targetConcentrations;
-        private List<FertilizerResult> calculationResults;
-        private IonBalance ionBalance;
-        private List<AcidCalculationResult> acidResults;
+        // Almacenamiento de datos
+        private ParametrosCalidadAgua datosAgua;
+        private Dictionary<string, double> concentracionesObjetivo;
+        private List<ResultadoFertilizante> resultadosCalculo;
+        private BalanceIonico balanceIonico;
+        private List<ResultadoCalculoAcido> resultadosAcidos;
 
-        // UI Controls
-        private TabControl mainTabControl;
-        private ProgressBar progressBar;
-        private Label stepLabel;
+        // Controles UI
+        private TabControl controlPestanasPrincipal;
+        private ProgressBar barraProgreso;
+        private Label etiquetaPaso;
 
-        // Step tracking
-        private int currentStep = 0;
-        private readonly string[] stepNames = {
-            "1. Water Analysis",
-            "2. Target Concentrations",
-            "3. pH Adjustment",
-            "4. Nutrient Calculations",
-            "5. Solution Verification",
-            "6. Concentrated Solutions",
-            "7. Cost Analysis",
-            "8. Final Report"
+        // Seguimiento de pasos
+        private int pasoActual = 0;
+        private readonly string[] nombresPasos = {
+            "1. Análisis de Agua",
+            "2. Concentraciones Objetivo",
+            "3. Ajuste de pH",
+            "4. Cálculos de Nutrientes",
+            "5. Verificación de Solución",
+            "6. Soluciones Concentradas",
+            "7. Análisis de Costos",
+            "8. Reporte Final"
         };
 
-        public CompleteHydroponicCalculatorForm()
+        public FormularioCalculadoraHidroponicaCompleta()
         {
-            InitializeModules();
-            InitializeComponent();
-            InitializeData();
-            LoadStep1_WaterAnalysis();
+            InicializarModulos();
+            InicializarComponente();
+            InicializarDatos();
+            CargarPaso1_AnalisisAgua();
         }
 
-        private void InitializeModules()
+        private void InicializarModulos()
         {
-            waterModule = new WaterAnalysisModule();
-            phModule = new PHAdjustmentModule();
-            nutrientModule = new NutrientCalculatorAdvanced();
-            verificationModule = new SolutionVerificationModule();
-            concentratedModule = new ConcentratedSolutionsModule();
-            costModule = new CostAnalysisModule();
+            moduloAgua = new ModuloAnalisisAgua();
+            moduloPh = new ModuloAjustePH();
+            moduloNutrientes = new CalculadoraNutrientesAvanzada();
+            moduloVerificacion = new ModuloVerificacionSolucion();
+            moduloConcentrados = new ModuloSolucionesConcentradas();
+            moduloCostos = new ModuloAnalisisCostos();
         }
 
-        private void InitializeComponent()
+        private void InicializarComponente()
         {
             this.Size = new Size(1400, 900);
-            this.Text = "Complete Hydroponic Nutrient Calculator - Professional Edition";
+            this.Text = "Calculadora Completa de Nutrientes Hidropónicos - Edición Profesional";
             this.StartPosition = FormStartPosition.CenterScreen;
 
-            // Create main layout
-            var mainPanel = new Panel
+            // Crear diseño principal
+            var panelPrincipal = new Panel
             {
                 Dock = DockStyle.Fill,
                 Padding = new Padding(10)
             };
 
-            // Progress bar at top
-            var progressPanel = new Panel
+            // Barra de progreso en la parte superior
+            var panelProgreso = new Panel
             {
                 Height = 60,
                 Dock = DockStyle.Top,
@@ -84,84 +84,84 @@ namespace HydroponicCalculator
                 Padding = new Padding(10)
             };
 
-            stepLabel = new Label
+            etiquetaPaso = new Label
             {
-                Text = stepNames[0],
+                Text = nombresPasos[0],
                 Font = new Font("Segoe UI", 12F, FontStyle.Bold),
                 Dock = DockStyle.Top,
                 Height = 25,
                 TextAlign = ContentAlignment.MiddleCenter
             };
 
-            progressBar = new ProgressBar
+            barraProgreso = new ProgressBar
             {
                 Dock = DockStyle.Bottom,
                 Height = 25,
                 Minimum = 0,
-                Maximum = stepNames.Length - 1,
+                Maximum = nombresPasos.Length - 1,
                 Value = 0,
                 Style = ProgressBarStyle.Continuous
             };
 
-            progressPanel.Controls.Add(stepLabel);
-            progressPanel.Controls.Add(progressBar);
+            panelProgreso.Controls.Add(etiquetaPaso);
+            panelProgreso.Controls.Add(barraProgreso);
 
-            // Main tab control
-            mainTabControl = new TabControl
+            // Control de pestañas principal
+            controlPestanasPrincipal = new TabControl
             {
                 Dock = DockStyle.Fill,
                 Font = new Font("Segoe UI", 9F)
             };
 
-            // Navigation buttons panel
-            var navigationPanel = new Panel
+            // Panel de botones de navegación
+            var panelNavegacion = new Panel
             {
                 Height = 50,
                 Dock = DockStyle.Bottom
             };
 
-            var prevButton = new Button
+            var botonAnterior = new Button
             {
-                Text = "← Previous",
+                Text = "← Anterior",
                 Size = new Size(100, 35),
                 Location = new Point(10, 8),
                 Enabled = false
             };
-            prevButton.Click += (s, e) => NavigateStep(-1);
+            botonAnterior.Click += (s, e) => NavegarPaso(-1);
 
-            var nextButton = new Button
+            var botonSiguiente = new Button
             {
-                Text = "Next →",
+                Text = "Siguiente →",
                 Size = new Size(100, 35),
                 Location = new Point(120, 8)
             };
-            nextButton.Click += (s, e) => NavigateStep(1);
+            botonSiguiente.Click += (s, e) => NavegarPaso(1);
 
-            var calculateButton = new Button
+            var botonCalcular = new Button
             {
-                Text = "Calculate Step",
+                Text = "Calcular Paso",
                 Size = new Size(120, 35),
                 Location = new Point(240, 8),
                 BackColor = Color.LightGreen
             };
-            calculateButton.Click += CalculateCurrentStep;
+            botonCalcular.Click += CalcularPasoActual;
 
-            navigationPanel.Controls.AddRange(new Control[] { prevButton, nextButton, calculateButton });
+            panelNavegacion.Controls.AddRange(new Control[] { botonAnterior, botonSiguiente, botonCalcular });
 
-            mainPanel.Controls.Add(mainTabControl);
-            this.Controls.Add(mainPanel);
-            this.Controls.Add(progressPanel);
-            this.Controls.Add(navigationPanel);
+            panelPrincipal.Controls.Add(controlPestanasPrincipal);
+            this.Controls.Add(panelPrincipal);
+            this.Controls.Add(panelProgreso);
+            this.Controls.Add(panelNavegacion);
         }
 
-        private void InitializeData()
+        private void InicializarDatos()
         {
-            waterData = new WaterQualityParameters
+            datosAgua = new ParametrosCalidadAgua
             {
                 pH = 7.2,
-                EC = 0.5,
+                CE = 0.5,
                 HCO3 = 77,
-                Elements_mgL = new Dictionary<string, double>
+                Elementos_mgL = new Dictionary<string, double>
                 {
                     ["Ca"] = 10.2,
                     ["K"] = 2.6,
@@ -173,91 +173,91 @@ namespace HydroponicCalculator
                 }
             };
 
-            targetConcentrations = nutrientModule.GetTargetConcentrations();
+            concentracionesObjetivo = moduloNutrientes.ObtenerConcentracionesObjetivo();
         }
 
-        private void LoadStep1_WaterAnalysis()
+        private void CargarPaso1_AnalisisAgua()
         {
-            var tab = new TabPage("Step 1: Water Analysis");
-            var mainPanel = new TableLayoutPanel
+            var pestana = new TabPage("Paso 1: Análisis de Agua");
+            var panelPrincipal = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 Padding = new Padding(10)
             };
-            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
-            // Input panel
-            var inputPanel = new GroupBox
+            // Panel de entrada
+            var panelEntrada = new GroupBox
             {
-                Text = "Water Analysis Input",
+                Text = "Entrada de Análisis de Agua",
                 Dock = DockStyle.Fill,
                 Padding = new Padding(10)
             };
 
-            var inputLayout = new TableLayoutPanel
+            var disenoEntrada = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 3,
                 AutoSize = true
             };
-            inputLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            inputLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            inputLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            disenoEntrada.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            disenoEntrada.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            disenoEntrada.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
             // pH
-            inputLayout.Controls.Add(new Label { Text = "pH:", TextAlign = ContentAlignment.MiddleRight }, 0, 0);
-            var phTextBox = new TextBox { Text = waterData.pH.ToString("F1"), Width = 100 };
-            inputLayout.Controls.Add(phTextBox, 1, 0);
-            inputLayout.Controls.Add(new Label { Text = "pH units" }, 2, 0);
+            disenoEntrada.Controls.Add(new Label { Text = "pH:", TextAlign = ContentAlignment.MiddleRight }, 0, 0);
+            var cajaPh = new TextBox { Text = datosAgua.pH.ToString("F1"), Width = 100 };
+            disenoEntrada.Controls.Add(cajaPh, 1, 0);
+            disenoEntrada.Controls.Add(new Label { Text = "unidades pH" }, 2, 0);
 
-            // EC
-            inputLayout.Controls.Add(new Label { Text = "EC:", TextAlign = ContentAlignment.MiddleRight }, 0, 1);
-            var ecTextBox = new TextBox { Text = waterData.EC.ToString("F1"), Width = 100 };
-            inputLayout.Controls.Add(ecTextBox, 1, 1);
-            inputLayout.Controls.Add(new Label { Text = "dS/m" }, 2, 1);
+            // CE
+            disenoEntrada.Controls.Add(new Label { Text = "CE:", TextAlign = ContentAlignment.MiddleRight }, 0, 1);
+            var cajaCe = new TextBox { Text = datosAgua.CE.ToString("F1"), Width = 100 };
+            disenoEntrada.Controls.Add(cajaCe, 1, 1);
+            disenoEntrada.Controls.Add(new Label { Text = "dS/m" }, 2, 1);
 
             // HCO3
-            inputLayout.Controls.Add(new Label { Text = "HCO3-:", TextAlign = ContentAlignment.MiddleRight }, 0, 2);
-            var hco3TextBox = new TextBox { Text = waterData.HCO3.ToString("F1"), Width = 100 };
-            inputLayout.Controls.Add(hco3TextBox, 1, 2);
-            inputLayout.Controls.Add(new Label { Text = "mg/L" }, 2, 2);
+            disenoEntrada.Controls.Add(new Label { Text = "HCO3-:", TextAlign = ContentAlignment.MiddleRight }, 0, 2);
+            var cajaHco3 = new TextBox { Text = datosAgua.HCO3.ToString("F1"), Width = 100 };
+            disenoEntrada.Controls.Add(cajaHco3, 1, 2);
+            disenoEntrada.Controls.Add(new Label { Text = "mg/L" }, 2, 2);
 
-            // Elements
-            var elementTextBoxes = new Dictionary<string, TextBox>();
-            int row = 3;
-            foreach (var element in waterData.Elements_mgL)
+            // Elementos
+            var cajasElementos = new Dictionary<string, TextBox>();
+            int fila = 3;
+            foreach (var elemento in datosAgua.Elementos_mgL)
             {
-                inputLayout.Controls.Add(new Label { Text = $"{element.Key}:", TextAlign = ContentAlignment.MiddleRight }, 0, row);
-                var textBox = new TextBox { Text = element.Value.ToString("F1"), Width = 100 };
-                elementTextBoxes[element.Key] = textBox;
-                inputLayout.Controls.Add(textBox, 1, row);
-                inputLayout.Controls.Add(new Label { Text = "mg/L" }, 2, row);
-                row++;
+                disenoEntrada.Controls.Add(new Label { Text = $"{elemento.Key}:", TextAlign = ContentAlignment.MiddleRight }, 0, fila);
+                var cajaTexto = new TextBox { Text = elemento.Value.ToString("F1"), Width = 100 };
+                cajasElementos[elemento.Key] = cajaTexto;
+                disenoEntrada.Controls.Add(cajaTexto, 1, fila);
+                disenoEntrada.Controls.Add(new Label { Text = "mg/L" }, 2, fila);
+                fila++;
             }
 
-            // Update button
-            var updateButton = new Button
+            // Botón de actualización
+            var botonActualizar = new Button
             {
-                Text = "Update Water Data",
+                Text = "Actualizar Datos de Agua",
                 Dock = DockStyle.Bottom,
                 Height = 35,
                 BackColor = Color.LightBlue
             };
-            updateButton.Click += (s, e) => UpdateWaterData(phTextBox, ecTextBox, hco3TextBox, elementTextBoxes);
+            botonActualizar.Click += (s, e) => ActualizarDatosAgua(cajaPh, cajaCe, cajaHco3, cajasElementos);
 
-            inputPanel.Controls.Add(inputLayout);
-            inputPanel.Controls.Add(updateButton);
+            panelEntrada.Controls.Add(disenoEntrada);
+            panelEntrada.Controls.Add(botonActualizar);
 
-            // Results panel
-            var resultsPanel = new GroupBox
+            // Panel de resultados
+            var panelResultados = new GroupBox
             {
-                Text = "Water Quality Analysis",
+                Text = "Análisis de Calidad del Agua",
                 Dock = DockStyle.Fill
             };
 
-            var resultsGrid = new DataGridView
+            var rejillaResultados = new DataGridView
             {
                 Dock = DockStyle.Fill,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
@@ -265,190 +265,190 @@ namespace HydroponicCalculator
                 AllowUserToAddRows = false
             };
 
-            resultsPanel.Controls.Add(resultsGrid);
+            panelResultados.Controls.Add(rejillaResultados);
 
-            // Store references for updates
-            resultsGrid.Name = "WaterQualityGrid";
+            // Almacenar referencias para actualizaciones
+            rejillaResultados.Name = "RejillaCalidadAgua";
 
-            mainPanel.Controls.Add(inputPanel, 0, 0);
-            mainPanel.Controls.Add(resultsPanel, 1, 0);
+            panelPrincipal.Controls.Add(panelEntrada, 0, 0);
+            panelPrincipal.Controls.Add(panelResultados, 1, 0);
 
-            tab.Controls.Add(mainPanel);
-            mainTabControl.TabPages.Add(tab);
+            pestana.Controls.Add(panelPrincipal);
+            controlPestanasPrincipal.TabPages.Add(pestana);
 
-            // Initial analysis
-            PerformWaterAnalysis();
+            // Análisis inicial
+            RealizarAnalisisAgua();
         }
 
-        private void UpdateWaterData(TextBox phBox, TextBox ecBox, TextBox hco3Box, Dictionary<string, TextBox> elementBoxes)
+        private void ActualizarDatosAgua(TextBox cajaPh, TextBox cajaCe, TextBox cajaHco3, Dictionary<string, TextBox> cajasElementos)
         {
             try
             {
-                waterData.pH = double.Parse(phBox.Text);
-                waterData.EC = double.Parse(ecBox.Text);
-                waterData.HCO3 = double.Parse(hco3Box.Text);
+                datosAgua.pH = double.Parse(cajaPh.Text);
+                datosAgua.CE = double.Parse(cajaCe.Text);
+                datosAgua.HCO3 = double.Parse(cajaHco3.Text);
 
-                foreach (var element in elementBoxes)
+                foreach (var elemento in cajasElementos)
                 {
-                    waterData.Elements_mgL[element.Key] = double.Parse(element.Value.Text);
+                    datosAgua.Elementos_mgL[elemento.Key] = double.Parse(elemento.Value.Text);
                 }
 
-                PerformWaterAnalysis();
-                MessageBox.Show("Water data updated successfully!", "Update Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                RealizarAnalisisAgua();
+                MessageBox.Show("¡Datos de agua actualizados con éxito!", "Actualización Completa", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error updating water data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error al actualizar datos de agua: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void PerformWaterAnalysis()
+        private void RealizarAnalisisAgua()
         {
-            waterData = waterModule.AnalyzeWater(waterData);
-            var qualityResults = waterModule.EvaluateWaterQuality(waterData);
-            var indices = waterModule.CalculateWaterQualityIndices(waterData);
-            var ionBalance = waterModule.VerifyIonBalance(waterData);
+            datosAgua = moduloAgua.AnalizarAgua(datosAgua);
+            var resultadosCalidad = moduloAgua.EvaluarCalidadAgua(datosAgua);
+            var indices = moduloAgua.CalcularIndicesCalidadAgua(datosAgua);
+            var balanceIonico = moduloAgua.VerificarBalanceIonico(datosAgua);
 
-            // Update results grid
-            var grid = mainTabControl.TabPages[0].Controls.Find("WaterQualityGrid", true).FirstOrDefault() as DataGridView;
-            if (grid != null)
+            // Actualizar rejilla de resultados
+            var rejilla = controlPestanasPrincipal.TabPages[0].Controls.Find("RejillaCalidadAgua", true).FirstOrDefault() as DataGridView;
+            if (rejilla != null)
             {
-                grid.DataSource = null;
-                grid.Columns.Clear();
+                rejilla.DataSource = null;
+                rejilla.Columns.Clear();
 
-                grid.Columns.Add("Parameter", "Parameter");
-                grid.Columns.Add("Value", "Value");
-                grid.Columns.Add("Unit", "Unit");
-                grid.Columns.Add("Status", "Status");
-                grid.Columns.Add("Recommendation", "Recommendation");
+                rejilla.Columns.Add("Parametro", "Parámetro");
+                rejilla.Columns.Add("Valor", "Valor");
+                rejilla.Columns.Add("Unidad", "Unidad");
+                rejilla.Columns.Add("Estado", "Estado");
+                rejilla.Columns.Add("Recomendacion", "Recomendación");
 
-                foreach (var result in qualityResults)
+                foreach (var resultado in resultadosCalidad)
                 {
-                    var rowIndex = grid.Rows.Add(result.Parameter,
-                                                result.Value.ToString("F2"),
-                                                result.Unit,
-                                                result.Status,
-                                                result.Recommendation);
+                    var indiceFila = rejilla.Rows.Add(resultado.Parametro,
+                                                resultado.Valor.ToString("F2"),
+                                                resultado.Unidad,
+                                                resultado.Estado,
+                                                resultado.Recomendacion);
 
-                    var row = grid.Rows[rowIndex];
-                    switch (result.StatusColor)
+                    var fila = rejilla.Rows[indiceFila];
+                    switch (resultado.ColorEstado)
                     {
-                        case "Green":
-                            row.DefaultCellStyle.BackColor = Color.LightGreen;
+                        case "Verde":
+                            fila.DefaultCellStyle.BackColor = Color.LightGreen;
                             break;
-                        case "Red":
-                            row.DefaultCellStyle.BackColor = Color.LightCoral;
+                        case "Rojo":
+                            fila.DefaultCellStyle.BackColor = Color.LightCoral;
                             break;
-                        case "Yellow":
-                            row.DefaultCellStyle.BackColor = Color.LightYellow;
+                        case "Amarillo":
+                            fila.DefaultCellStyle.BackColor = Color.LightYellow;
                             break;
                     }
                 }
 
-                // Add separator and indices
-                grid.Rows.Add("=== QUALITY INDICES ===", "", "", "", "");
-                grid.Rows.Add("SAR", indices.SAR.ToString("F2"), "", indices.SAR < 3 ? "OK" : "High", "");
-                grid.Rows.Add("RSC", indices.RSC.ToString("F2"), "meq/L", indices.RSC < 1.25 ? "OK" : "High", "");
-                grid.Rows.Add("Ca/Mg Ratio", indices.CaMgRatio.ToString("F2"), "",
-                             indices.CaMgRatio >= 2 && indices.CaMgRatio <= 4 ? "OK" : "Imbalanced", "");
+                // Agregar separador e índices
+                rejilla.Rows.Add("=== ÍNDICES DE CALIDAD ===", "", "", "", "");
+                rejilla.Rows.Add("SAR", indices.SAR.ToString("F2"), "", indices.SAR < 3 ? "OK" : "Alto", "");
+                rejilla.Rows.Add("RSC", indices.RSC.ToString("F2"), "meq/L", indices.RSC < 1.25 ? "OK" : "Alto", "");
+                rejilla.Rows.Add("Relación Ca/Mg", indices.RatioCaMg.ToString("F2"), "",
+                             indices.RatioCaMg >= 2 && indices.RatioCaMg <= 4 ? "OK" : "Desbalanceado", "");
 
-                grid.Rows.Add("=== ION BALANCE ===", "", "", "", "");
-                grid.Rows.Add("Ion Balance", $"{ionBalance["PercentageDifference"]:F1}%", "",
-                             ionBalance["IsBalanced"] == 1 ? "Balanced" : "Imbalanced",
-                             ionBalance["IsBalanced"] == 1 ? "Within 10% tolerance" : "Exceeds 10% tolerance");
+                rejilla.Rows.Add("=== BALANCE IÓNICO ===", "", "", "", "");
+                rejilla.Rows.Add("Balance Iónico", $"{balanceIonico["DiferenciaPorcentual"]:F1}%", "",
+                             balanceIonico["EstaBalanceado"] == 1 ? "Balanceado" : "Desbalanceado",
+                             balanceIonico["EstaBalanceado"] == 1 ? "Dentro de tolerancia del 10%" : "Excede tolerancia del 10%");
             }
         }
 
-        private void LoadStep2_TargetConcentrations()
+        private void CargarPaso2_ConcentracionesObjetivo()
         {
-            var tab = new TabPage("Step 2: Target Concentrations");
-            var mainPanel = new TableLayoutPanel
+            var pestana = new TabPage("Paso 2: Concentraciones Objetivo");
+            var panelPrincipal = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 Padding = new Padding(10)
             };
-            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
-            // Target input panel
-            var inputPanel = new GroupBox
+            // Panel de entrada de objetivos
+            var panelEntrada = new GroupBox
             {
-                Text = "Target Nutrient Concentrations (mg/L)",
+                Text = "Concentraciones de Nutrientes Objetivo (mg/L)",
                 Dock = DockStyle.Fill,
                 Padding = new Padding(10)
             };
 
-            var inputLayout = new TableLayoutPanel
+            var disenoEntrada = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 3,
                 AutoSize = true
             };
-            inputLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-            inputLayout.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            inputLayout.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            disenoEntrada.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            disenoEntrada.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            disenoEntrada.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 
-            var targetTextBoxes = new Dictionary<string, TextBox>();
-            int row = 0;
+            var cajasObjetivo = new Dictionary<string, TextBox>();
+            int fila = 0;
 
-            // Crop selection
-            inputLayout.Controls.Add(new Label { Text = "Crop Type:", TextAlign = ContentAlignment.MiddleRight }, 0, row);
-            var cropCombo = new ComboBox
+            // Selección de cultivo
+            disenoEntrada.Controls.Add(new Label { Text = "Tipo de Cultivo:", TextAlign = ContentAlignment.MiddleRight }, 0, fila);
+            var comboCultivo = new ComboBox
             {
                 Width = 150,
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
-            cropCombo.Items.AddRange(new[] { "Tomato", "Lettuce", "Cucumber", "Pepper", "Strawberry", "Custom" });
-            cropCombo.SelectedIndex = 0;
-            inputLayout.Controls.Add(cropCombo, 1, row);
-            row++;
+            comboCultivo.Items.AddRange(new[] { "Tomate", "Lechuga", "Pepino", "Pimiento", "Fresa", "Personalizado" });
+            comboCultivo.SelectedIndex = 0;
+            disenoEntrada.Controls.Add(comboCultivo, 1, fila);
+            fila++;
 
-            // Growth stage
-            inputLayout.Controls.Add(new Label { Text = "Growth Stage:", TextAlign = ContentAlignment.MiddleRight }, 0, row);
-            var stageCombo = new ComboBox
+            // Etapa de crecimiento
+            disenoEntrada.Controls.Add(new Label { Text = "Etapa de Crecimiento:", TextAlign = ContentAlignment.MiddleRight }, 0, fila);
+            var comboEtapa = new ComboBox
             {
                 Width = 150,
                 DropDownStyle = ComboBoxStyle.DropDownList
             };
-            stageCombo.Items.AddRange(new[] { "Seedling", "Vegetative", "Flowering", "Fruiting" });
-            stageCombo.SelectedIndex = 2;
-            inputLayout.Controls.Add(stageCombo, 1, row);
-            row++;
+            comboEtapa.Items.AddRange(new[] { "Plántula", "Vegetativo", "Floración", "Fructificación" });
+            comboEtapa.SelectedIndex = 2;
+            disenoEntrada.Controls.Add(comboEtapa, 1, fila);
+            fila++;
 
-            // Load defaults button
-            var loadDefaultsButton = new Button
+            // Botón cargar valores por defecto
+            var botonCargarDefecto = new Button
             {
-                Text = "Load Crop Defaults",
+                Text = "Cargar Valores por Defecto del Cultivo",
                 Width = 150,
                 Height = 25
             };
-            loadDefaultsButton.Click += (s, e) => LoadCropDefaults(cropCombo.Text, stageCombo.Text, targetTextBoxes);
-            inputLayout.Controls.Add(loadDefaultsButton, 1, row);
-            row++;
+            botonCargarDefecto.Click += (s, e) => CargarValoresDefectoCultivo(comboCultivo.Text, comboEtapa.Text, cajasObjetivo);
+            disenoEntrada.Controls.Add(botonCargarDefecto, 1, fila);
+            fila++;
 
-            // Separator
-            inputLayout.Controls.Add(new Label { Text = "=== MACRONUTRIENTS ===", Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 0, row);
-            row++;
+            // Separador
+            disenoEntrada.Controls.Add(new Label { Text = "=== MACRONUTRIENTES ===", Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 0, fila);
+            fila++;
 
-            // Major nutrients
-            var majorNutrients = new[] { "N", "P", "K", "Ca", "Mg", "S" };
-            foreach (var nutrient in majorNutrients)
+            // Nutrientes principales
+            var nutrientesPrincipales = new[] { "N", "P", "K", "Ca", "Mg", "S" };
+            foreach (var nutriente in nutrientesPrincipales)
             {
-                inputLayout.Controls.Add(new Label { Text = $"{nutrient}:", TextAlign = ContentAlignment.MiddleRight }, 0, row);
-                var textBox = new TextBox { Text = targetConcentrations[nutrient].ToString("F1"), Width = 100 };
-                targetTextBoxes[nutrient] = textBox;
-                inputLayout.Controls.Add(textBox, 1, row);
-                inputLayout.Controls.Add(new Label { Text = "mg/L" }, 2, row);
-                row++;
+                disenoEntrada.Controls.Add(new Label { Text = $"{nutriente}:", TextAlign = ContentAlignment.MiddleRight }, 0, fila);
+                var cajaTexto = new TextBox { Text = concentracionesObjetivo[nutriente].ToString("F1"), Width = 100 };
+                cajasObjetivo[nutriente] = cajaTexto;
+                disenoEntrada.Controls.Add(cajaTexto, 1, fila);
+                disenoEntrada.Controls.Add(new Label { Text = "mg/L" }, 2, fila);
+                fila++;
             }
 
-            // Separator
-            inputLayout.Controls.Add(new Label { Text = "=== MICRONUTRIENTS ===", Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 0, row);
-            row++;
+            // Separador
+            disenoEntrada.Controls.Add(new Label { Text = "=== MICRONUTRIENTES ===", Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 0, fila);
+            fila++;
 
-            // Micronutrients with default values
-            var microDefaults = new Dictionary<string, double>
+            // Micronutrientes con valores por defecto
+            var microDefecto = new Dictionary<string, double>
             {
                 ["Fe"] = 1.0,
                 ["Mn"] = 0.5,
@@ -458,51 +458,51 @@ namespace HydroponicCalculator
                 ["Mo"] = 0.01
             };
 
-            foreach (var micro in microDefaults)
+            foreach (var micro in microDefecto)
             {
-                inputLayout.Controls.Add(new Label { Text = $"{micro.Key}:", TextAlign = ContentAlignment.MiddleRight }, 0, row);
-                var textBox = new TextBox { Text = micro.Value.ToString("F2"), Width = 100 };
-                targetTextBoxes[micro.Key] = textBox;
-                inputLayout.Controls.Add(textBox, 1, row);
-                inputLayout.Controls.Add(new Label { Text = "mg/L" }, 2, row);
-                row++;
+                disenoEntrada.Controls.Add(new Label { Text = $"{micro.Key}:", TextAlign = ContentAlignment.MiddleRight }, 0, fila);
+                var cajaTexto = new TextBox { Text = micro.Value.ToString("F2"), Width = 100 };
+                cajasObjetivo[micro.Key] = cajaTexto;
+                disenoEntrada.Controls.Add(cajaTexto, 1, fila);
+                disenoEntrada.Controls.Add(new Label { Text = "mg/L" }, 2, fila);
+                fila++;
             }
 
-            inputPanel.Controls.Add(inputLayout);
+            panelEntrada.Controls.Add(disenoEntrada);
 
-            // Current vs Target comparison panel
-            var comparisonPanel = new GroupBox
+            // Panel de comparación Agua vs Objetivo actual
+            var panelComparacion = new GroupBox
             {
-                Text = "Water vs Target Analysis",
+                Text = "Análisis Agua vs Objetivo",
                 Dock = DockStyle.Fill
             };
 
-            var comparisonGrid = new DataGridView
+            var rejillaComparacion = new DataGridView
             {
                 Dock = DockStyle.Fill,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 ReadOnly = true,
                 AllowUserToAddRows = false,
-                Name = "ComparisonGrid"
+                Name = "RejillaComparacion"
             };
 
-            comparisonPanel.Controls.Add(comparisonGrid);
+            panelComparacion.Controls.Add(rejillaComparacion);
 
-            mainPanel.Controls.Add(inputPanel, 0, 0);
-            mainPanel.Controls.Add(comparisonPanel, 1, 0);
+            panelPrincipal.Controls.Add(panelEntrada, 0, 0);
+            panelPrincipal.Controls.Add(panelComparacion, 1, 0);
 
-            tab.Controls.Add(mainPanel);
-            mainTabControl.TabPages.Add(tab);
+            pestana.Controls.Add(panelPrincipal);
+            controlPestanasPrincipal.TabPages.Add(pestana);
 
-            // Initial comparison
-            UpdateTargetComparison();
+            // Comparación inicial
+            ActualizarComparacionObjetivo();
         }
 
-        private void LoadCropDefaults(string crop, string stage, Dictionary<string, TextBox> textBoxes)
+        private void CargarValoresDefectoCultivo(string cultivo, string etapa, Dictionary<string, TextBox> cajasTexto)
         {
-            var defaults = new Dictionary<string, Dictionary<string, double>>
+            var valoresDefecto = new Dictionary<string, Dictionary<string, double>>
             {
-                ["Tomato"] = new Dictionary<string, double>
+                ["Tomate"] = new Dictionary<string, double>
                 {
                     ["N"] = 150,
                     ["P"] = 45,
@@ -517,7 +517,7 @@ namespace HydroponicCalculator
                     ["B"] = 0.5,
                     ["Mo"] = 0.01
                 },
-                ["Lettuce"] = new Dictionary<string, double>
+                ["Lechuga"] = new Dictionary<string, double>
                 {
                     ["N"] = 120,
                     ["P"] = 35,
@@ -532,7 +532,7 @@ namespace HydroponicCalculator
                     ["B"] = 0.4,
                     ["Mo"] = 0.01
                 },
-                ["Cucumber"] = new Dictionary<string, double>
+                ["Pepino"] = new Dictionary<string, double>
                 {
                     ["N"] = 160,
                     ["P"] = 50,
@@ -549,196 +549,196 @@ namespace HydroponicCalculator
                 }
             };
 
-            if (defaults.ContainsKey(crop))
+            if (valoresDefecto.ContainsKey(cultivo))
             {
-                var cropDefaults = defaults[crop];
+                var defectosCultivo = valoresDefecto[cultivo];
 
-                // Adjust based on stage
-                double stageMultiplier = stage switch
+                // Ajustar según la etapa
+                double multiplicadorEtapa = etapa switch
                 {
-                    "Seedling" => 0.5,
-                    "Vegetative" => 0.8,
-                    "Flowering" => 1.0,
-                    "Fruiting" => 1.2,
+                    "Plántula" => 0.5,
+                    "Vegetativo" => 0.8,
+                    "Floración" => 1.0,
+                    "Fructificación" => 1.2,
                     _ => 1.0
                 };
 
-                foreach (var nutrient in cropDefaults)
+                foreach (var nutriente in defectosCultivo)
                 {
-                    if (textBoxes.ContainsKey(nutrient.Key))
+                    if (cajasTexto.ContainsKey(nutriente.Key))
                     {
-                        double adjustedValue = nutrient.Value * stageMultiplier;
-                        textBoxes[nutrient.Key].Text = adjustedValue.ToString("F1");
+                        double valorAjustado = nutriente.Value * multiplicadorEtapa;
+                        cajasTexto[nutriente.Key].Text = valorAjustado.ToString("F1");
                     }
                 }
 
-                // Update target concentrations
-                foreach (var textBox in textBoxes)
+                // Actualizar concentraciones objetivo
+                foreach (var cajaTexto in cajasTexto)
                 {
-                    if (double.TryParse(textBox.Value.Text, out double value))
+                    if (double.TryParse(cajaTexto.Value.Text, out double valor))
                     {
-                        targetConcentrations[textBox.Key] = value;
+                        concentracionesObjetivo[cajaTexto.Key] = valor;
                     }
                 }
 
-                UpdateTargetComparison();
-                MessageBox.Show($"Loaded {crop} defaults for {stage} stage", "Defaults Loaded",
+                ActualizarComparacionObjetivo();
+                MessageBox.Show($"Valores por defecto de {cultivo} cargados para etapa {etapa}", "Valores por Defecto Cargados",
                               MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
-        private void UpdateTargetComparison()
+        private void ActualizarComparacionObjetivo()
         {
-            var grid = mainTabControl.TabPages[1].Controls.Find("ComparisonGrid", true).FirstOrDefault() as DataGridView;
-            if (grid == null) return;
+            var rejilla = controlPestanasPrincipal.TabPages[1].Controls.Find("RejillaComparacion", true).FirstOrDefault() as DataGridView;
+            if (rejilla == null) return;
 
-            grid.Columns.Clear();
-            grid.Columns.Add("Nutrient", "Nutrient");
-            grid.Columns.Add("InWater", "In Water (mg/L)");
-            grid.Columns.Add("Target", "Target (mg/L)");
-            grid.Columns.Add("ToAdd", "To Add (mg/L)");
-            grid.Columns.Add("Status", "Status");
+            rejilla.Columns.Clear();
+            rejilla.Columns.Add("Nutriente", "Nutriente");
+            rejilla.Columns.Add("EnAgua", "En Agua (mg/L)");
+            rejilla.Columns.Add("Objetivo", "Objetivo (mg/L)");
+            rejilla.Columns.Add("PorAgregar", "Por Agregar (mg/L)");
+            rejilla.Columns.Add("Estado", "Estado");
 
-            foreach (var target in targetConcentrations)
+            foreach (var objetivo in concentracionesObjetivo)
             {
-                double inWater = waterData.Elements_mgL.GetValueOrDefault(target.Key, 0);
-                double toAdd = Math.Max(0, target.Value - inWater);
-                string status = toAdd <= 0 ? "Sufficient" : toAdd > target.Value * 0.8 ? "High Need" : "Moderate Need";
+                double enAgua = datosAgua.Elementos_mgL.GetValueOrDefault(objetivo.Key, 0);
+                double porAgregar = Math.Max(0, objetivo.Value - enAgua);
+                string estado = porAgregar <= 0 ? "Suficiente" : porAgregar > objetivo.Value * 0.8 ? "Alta Necesidad" : "Necesidad Moderada";
 
-                var rowIndex = grid.Rows.Add(target.Key, inWater.ToString("F1"),
-                                           target.Value.ToString("F1"), toAdd.ToString("F1"), status);
+                var indiceFila = rejilla.Rows.Add(objetivo.Key, enAgua.ToString("F1"),
+                                           objetivo.Value.ToString("F1"), porAgregar.ToString("F1"), estado);
 
-                var row = grid.Rows[rowIndex];
-                row.DefaultCellStyle.BackColor = status switch
+                var fila = rejilla.Rows[indiceFila];
+                fila.DefaultCellStyle.BackColor = estado switch
                 {
-                    "Sufficient" => Color.LightGreen,
-                    "High Need" => Color.LightCoral,
+                    "Suficiente" => Color.LightGreen,
+                    "Alta Necesidad" => Color.LightCoral,
                     _ => Color.LightYellow
                 };
             }
         }
 
-        private void LoadStep3_PHAdjustment()
+        private void CargarPaso3_AjustePH()
         {
-            var tab = new TabPage("Step 3: pH Adjustment");
-            var mainPanel = new TableLayoutPanel
+            var pestana = new TabPage("Paso 3: Ajuste de pH");
+            var panelPrincipal = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 Padding = new Padding(10)
             };
-            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
-            mainPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 60));
 
-            // pH adjustment input panel
-            var inputPanel = new GroupBox
+            // Panel de entrada de ajuste de pH
+            var panelEntrada = new GroupBox
             {
-                Text = "pH Adjustment Parameters",
+                Text = "Parámetros de Ajuste de pH",
                 Dock = DockStyle.Fill,
                 Padding = new Padding(10)
             };
 
-            var inputLayout = new TableLayoutPanel
+            var disenoEntrada = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
                 AutoSize = true
             };
 
-            // Current water pH
-            inputLayout.Controls.Add(new Label { Text = "Current pH:", TextAlign = ContentAlignment.MiddleRight }, 0, 0);
-            inputLayout.Controls.Add(new Label { Text = waterData.pH.ToString("F1"), Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 1, 0);
+            // pH actual del agua
+            disenoEntrada.Controls.Add(new Label { Text = "pH Actual:", TextAlign = ContentAlignment.MiddleRight }, 0, 0);
+            disenoEntrada.Controls.Add(new Label { Text = datosAgua.pH.ToString("F1"), Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 1, 0);
 
-            // Target pH
-            inputLayout.Controls.Add(new Label { Text = "Target pH:", TextAlign = ContentAlignment.MiddleRight }, 0, 1);
-            var targetPHBox = new TextBox { Text = "6.0", Width = 100 };
-            inputLayout.Controls.Add(targetPHBox, 1, 1);
+            // pH objetivo
+            disenoEntrada.Controls.Add(new Label { Text = "pH Objetivo:", TextAlign = ContentAlignment.MiddleRight }, 0, 1);
+            var cajaPHObjetivo = new TextBox { Text = "6.0", Width = 100 };
+            disenoEntrada.Controls.Add(cajaPHObjetivo, 1, 1);
 
-            // HCO3 concentration
-            inputLayout.Controls.Add(new Label { Text = "HCO3- (mg/L):", TextAlign = ContentAlignment.MiddleRight }, 0, 2);
-            inputLayout.Controls.Add(new Label { Text = waterData.HCO3.ToString("F1"), Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 1, 2);
+            // Concentración HCO3
+            disenoEntrada.Controls.Add(new Label { Text = "HCO3- (mg/L):", TextAlign = ContentAlignment.MiddleRight }, 0, 2);
+            disenoEntrada.Controls.Add(new Label { Text = datosAgua.HCO3.ToString("F1"), Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 1, 2);
 
-            // Phosphorus needs
-            double targetP = targetConcentrations.GetValueOrDefault("P", 45);
-            double currentP = waterData.Elements_mgL.GetValueOrDefault("P", 0);
-            inputLayout.Controls.Add(new Label { Text = "P needed (mg/L):", TextAlign = ContentAlignment.MiddleRight }, 0, 3);
-            inputLayout.Controls.Add(new Label { Text = Math.Max(0, targetP - currentP).ToString("F1"), Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 1, 3);
+            // Necesidades de fósforo
+            double pObjetivo = concentracionesObjetivo.GetValueOrDefault("P", 45);
+            double pActual = datosAgua.Elementos_mgL.GetValueOrDefault("P", 0);
+            disenoEntrada.Controls.Add(new Label { Text = "P necesario (mg/L):", TextAlign = ContentAlignment.MiddleRight }, 0, 3);
+            disenoEntrada.Controls.Add(new Label { Text = Math.Max(0, pObjetivo - pActual).ToString("F1"), Font = new Font("Segoe UI", 9F, FontStyle.Bold) }, 1, 3);
 
-            // Calculate button
-            var calculatePHButton = new Button
+            // Botón calcular
+            var botonCalcularPH = new Button
             {
-                Text = "Calculate Acid Requirements",
+                Text = "Calcular Requerimientos de Ácido",
                 Dock = DockStyle.Bottom,
                 Height = 35,
                 BackColor = Color.LightBlue
             };
-            calculatePHButton.Click += (s, e) => CalculatePHAdjustment(double.Parse(targetPHBox.Text));
+            botonCalcularPH.Click += (s, e) => CalcularAjustePH(double.Parse(cajaPHObjetivo.Text));
 
-            inputPanel.Controls.Add(inputLayout);
-            inputPanel.Controls.Add(calculatePHButton);
+            panelEntrada.Controls.Add(disenoEntrada);
+            panelEntrada.Controls.Add(botonCalcularPH);
 
-            // Results panel
-            var resultsPanel = new GroupBox
+            // Panel de resultados
+            var panelResultados = new GroupBox
             {
-                Text = "Acid Calculation Results",
+                Text = "Resultados de Cálculo de Ácidos",
                 Dock = DockStyle.Fill
             };
 
-            var resultsGrid = new DataGridView
+            var rejillaResultados = new DataGridView
             {
                 Dock = DockStyle.Fill,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 ReadOnly = true,
                 AllowUserToAddRows = false,
-                Name = "AcidResultsGrid"
+                Name = "RejillaResultadosAcidos"
             };
 
-            resultsPanel.Controls.Add(resultsGrid);
+            panelResultados.Controls.Add(rejillaResultados);
 
-            mainPanel.Controls.Add(inputPanel, 0, 0);
-            mainPanel.Controls.Add(resultsPanel, 1, 0);
+            panelPrincipal.Controls.Add(panelEntrada, 0, 0);
+            panelPrincipal.Controls.Add(panelResultados, 1, 0);
 
-            tab.Controls.Add(mainPanel);
-            mainTabControl.TabPages.Add(tab);
+            pestana.Controls.Add(panelPrincipal);
+            controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
-        private void CalculatePHAdjustment(double targetPH)
+        private void CalcularAjustePH(double pHObjetivo)
         {
             try
             {
-                double targetP = targetConcentrations.GetValueOrDefault("P", 45);
-                double currentP = waterData.Elements_mgL.GetValueOrDefault("P", 0);
+                double pObjetivo = concentracionesObjetivo.GetValueOrDefault("P", 45);
+                double pActual = datosAgua.Elementos_mgL.GetValueOrDefault("P", 0);
 
-                acidResults = phModule.CalculateAcidRequirement_IncrossiMethod(
-                    waterData.HCO3, targetPH, targetP, currentP);
+                resultadosAcidos = moduloPh.CalcularRequerimientoAcido_MetodoIncrossi(
+                    datosAgua.HCO3, pHObjetivo, pObjetivo, pActual);
 
-                var grid = mainTabControl.TabPages[2].Controls.Find("AcidResultsGrid", true).FirstOrDefault() as DataGridView;
-                if (grid == null) return;
+                var rejilla = controlPestanasPrincipal.TabPages[2].Controls.Find("RejillaResultadosAcidos", true).FirstOrDefault() as DataGridView;
+                if (rejilla == null) return;
 
-                grid.Columns.Clear();
-                grid.Columns.Add("Acid", "Acid Type");
-                grid.Columns.Add("Volume", "Volume (mL/L)");
-                grid.Columns.Add("HConc", "H+ (mg/L)");
-                grid.Columns.Add("Nutrient", "Nutrient");
-                grid.Columns.Add("NutrientAmount", "Amount (mg/L)");
-                grid.Columns.Add("Bicarbonates", "HCO3- Neutralized");
+                rejilla.Columns.Clear();
+                rejilla.Columns.Add("Acido", "Tipo de Ácido");
+                rejilla.Columns.Add("Volumen", "Volumen (mL/L)");
+                rejilla.Columns.Add("ConcentracionH", "H+ (mg/L)");
+                rejilla.Columns.Add("Nutriente", "Nutriente");
+                rejilla.Columns.Add("CantidadNutriente", "Cantidad (mg/L)");
+                rejilla.Columns.Add("Bicarbonatos", "HCO3- Neutralizado");
 
-                foreach (var result in acidResults)
+                foreach (var resultado in resultadosAcidos)
                 {
-                    grid.Rows.Add(
-                        result.AcidName,
-                        result.AcidVolume_mlL.ToString("F3"),
-                        result.HydrogenConcentration_mgL.ToString("F1"),
-                        result.NutrientType,
-                        result.NutrientContribution_mgL.ToString("F1"),
-                        result.BicarbonatesToNeutralize.ToString("F1")
+                    rejilla.Rows.Add(
+                        resultado.NombreAcido,
+                        resultado.VolumenAcido_mlL.ToString("F3"),
+                        resultado.ConcentracionHidrogeno_mgL.ToString("F1"),
+                        resultado.TipoNutriente,
+                        resultado.ContribucionNutriente_mgL.ToString("F1"),
+                        resultado.BicarbonatosANeutralizar.ToString("F1")
                     );
                 }
 
-                // Add recommendation
-                var recommendation = phModule.GetAcidRecommendation(waterData.HCO3, currentP, targetP);
+                // Agregar recomendación
+                var recomendacion = moduloPh.ObtenerRecomendacionAcido(datosAgua.HCO3, pActual, pObjetivo);
 
-                var recPanel = new Panel
+                var panelRec = new Panel
                 {
                     Height = 80,
                     Dock = DockStyle.Bottom,
@@ -746,129 +746,129 @@ namespace HydroponicCalculator
                     Padding = new Padding(10)
                 };
 
-                var recLabel = new Label
+                var etiquetaRec = new Label
                 {
-                    Text = "Recommendation: " + recommendation,
+                    Text = "Recomendación: " + recomendacion,
                     Dock = DockStyle.Fill,
                     Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                     TextAlign = ContentAlignment.MiddleLeft
                 };
 
-                recPanel.Controls.Add(recLabel);
-                mainTabControl.TabPages[2].Controls.Add(recPanel);
+                panelRec.Controls.Add(etiquetaRec);
+                controlPestanasPrincipal.TabPages[2].Controls.Add(panelRec);
 
-                MessageBox.Show("pH adjustment calculations completed!", "Calculation Complete",
+                MessageBox.Show("¡Cálculos de ajuste de pH completados!", "Cálculo Completo",
                               MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error calculating pH adjustment: {ex.Message}", "Calculation Error",
+                MessageBox.Show($"Error al calcular ajuste de pH: {ex.Message}", "Error de Cálculo",
                               MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void NavigateStep(int direction)
+        private void NavegarPaso(int direccion)
         {
-            int newStep = currentStep + direction;
-            if (newStep < 0 || newStep >= stepNames.Length) return;
+            int nuevoPaso = pasoActual + direccion;
+            if (nuevoPaso < 0 || nuevoPaso >= nombresPasos.Length) return;
 
-            currentStep = newStep;
-            stepLabel.Text = stepNames[currentStep];
-            progressBar.Value = currentStep;
+            pasoActual = nuevoPaso;
+            etiquetaPaso.Text = nombresPasos[pasoActual];
+            barraProgreso.Value = pasoActual;
 
-            // Load appropriate step
-            switch (currentStep)
+            // Cargar paso apropiado
+            switch (pasoActual)
             {
                 case 1:
-                    if (mainTabControl.TabPages.Count < 2) LoadStep2_TargetConcentrations();
+                    if (controlPestanasPrincipal.TabPages.Count < 2) CargarPaso2_ConcentracionesObjetivo();
                     break;
                 case 2:
-                    if (mainTabControl.TabPages.Count < 3) LoadStep3_PHAdjustment();
+                    if (controlPestanasPrincipal.TabPages.Count < 3) CargarPaso3_AjustePH();
                     break;
                 case 3:
-                    if (mainTabControl.TabPages.Count < 4) LoadStep4_NutrientCalculations();
+                    if (controlPestanasPrincipal.TabPages.Count < 4) CargarPaso4_CalculosNutrientes();
                     break;
                 case 4:
-                    if (mainTabControl.TabPages.Count < 5) LoadStep5_SolutionVerification();
+                    if (controlPestanasPrincipal.TabPages.Count < 5) CargarPaso5_VerificacionSolucion();
                     break;
                 case 5:
-                    if (mainTabControl.TabPages.Count < 6) LoadStep6_ConcentratedSolutions();
+                    if (controlPestanasPrincipal.TabPages.Count < 6) CargarPaso6_SolucionesConcentradas();
                     break;
                 case 6:
-                    if (mainTabControl.TabPages.Count < 7) LoadStep7_CostAnalysis();
+                    if (controlPestanasPrincipal.TabPages.Count < 7) CargarPaso7_AnalisisCostos();
                     break;
                 case 7:
-                    if (mainTabControl.TabPages.Count < 8) LoadStep8_FinalReport();
+                    if (controlPestanasPrincipal.TabPages.Count < 8) CargarPaso8_ReporteFinal();
                     break;
             }
 
-            mainTabControl.SelectedIndex = currentStep;
+            controlPestanasPrincipal.SelectedIndex = pasoActual;
 
-            // Update navigation buttons
-            var navigationPanel = this.Controls.OfType<Panel>().LastOrDefault();
-            if (navigationPanel != null)
+            // Actualizar botones de navegación
+            var panelNavegacion = this.Controls.OfType<Panel>().LastOrDefault();
+            if (panelNavegacion != null)
             {
-                var prevButton = navigationPanel.Controls[0] as Button;
-                var nextButton = navigationPanel.Controls[1] as Button;
+                var botonAnterior = panelNavegacion.Controls[0] as Button;
+                var botonSiguiente = panelNavegacion.Controls[1] as Button;
 
-                if (prevButton != null) prevButton.Enabled = currentStep > 0;
-                if (nextButton != null) nextButton.Enabled = currentStep < stepNames.Length - 1;
+                if (botonAnterior != null) botonAnterior.Enabled = pasoActual > 0;
+                if (botonSiguiente != null) botonSiguiente.Enabled = pasoActual < nombresPasos.Length - 1;
             }
         }
 
-        private void CalculateCurrentStep(object sender, EventArgs e)
+        private void CalcularPasoActual(object sender, EventArgs e)
         {
-            switch (currentStep)
+            switch (pasoActual)
             {
                 case 0:
-                    PerformWaterAnalysis();
+                    RealizarAnalisisAgua();
                     break;
                 case 1:
-                    UpdateTargetConcentrations();
+                    ActualizarConcentracionesObjetivo();
                     break;
                 case 2:
-                    if (mainTabControl.TabPages[2].Controls.Find("TargetPHBox", true).FirstOrDefault() is TextBox phBox)
-                        CalculatePHAdjustment(double.Parse(phBox.Text));
+                    if (controlPestanasPrincipal.TabPages[2].Controls.Find("CajaPHObjetivo", true).FirstOrDefault() is TextBox cajaPh)
+                        CalcularAjustePH(double.Parse(cajaPh.Text));
                     break;
                 case 3:
-                    CalculateNutrientSolution();
+                    CalcularSolucionNutritiva();
                     break;
                 case 4:
-                    PerformVerification();
+                    RealizarVerificacion();
                     break;
                 case 5:
-                    CalculateConcentratedSolutions();
+                    CalcularSolucionesConcentradas();
                     break;
                 case 6:
-                    PerformCostAnalysis();
+                    RealizarAnalisisCostos();
                     break;
                 case 7:
-                    GenerateFinalReport();
+                    GenerarReporteFinal();
                     break;
             }
         }
 
-        private void UpdateTargetConcentrations()
+        private void ActualizarConcentracionesObjetivo()
         {
-            // Update target concentrations from UI
-            UpdateTargetComparison();
-            MessageBox.Show("Target concentrations updated!", "Update Complete",
+            // Actualizar concentraciones objetivo desde UI
+            ActualizarComparacionObjetivo();
+            MessageBox.Show("¡Concentraciones objetivo actualizadas!", "Actualización Completa",
                           MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void LoadStep4_NutrientCalculations()
+        private void CargarPaso4_CalculosNutrientes()
         {
-            var tab = new TabPage("Step 4: Nutrient Calculations");
-            var grid = new DataGridView
+            var pestana = new TabPage("Paso 4: Cálculos de Nutrientes");
+            var rejilla = new DataGridView
             {
                 Dock = DockStyle.Fill,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 ReadOnly = true,
                 AllowUserToAddRows = false,
-                Name = "NutrientCalculationsGrid"
+                Name = "RejillaCalculosNutrientes"
             };
 
-            var infoPanel = new Panel
+            var panelInfo = new Panel
             {
                 Height = 60,
                 Dock = DockStyle.Top,
@@ -876,146 +876,146 @@ namespace HydroponicCalculator
                 Padding = new Padding(10)
             };
 
-            var infoLabel = new Label
+            var etiquetaInfo = new Label
             {
-                Text = "This step calculates fertilizer quantities using the formula: P = C × M × 100 / (A × %P)\n" +
-                       "Where P=fertilizer amount, C=target concentration, M=molecular weight, A=element weight, %P=purity",
+                Text = "Este paso calcula las cantidades de fertilizantes usando la fórmula: P = C × M × 100 / (A × %P)\n" +
+                       "Donde P=cantidad fertilizante, C=concentración objetivo, M=peso molecular, A=peso elemento, %P=pureza",
                 Dock = DockStyle.Fill,
                 Font = new Font("Segoe UI", 9F),
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
-            infoPanel.Controls.Add(infoLabel);
-            tab.Controls.Add(grid);
-            tab.Controls.Add(infoPanel);
-            mainTabControl.TabPages.Add(tab);
+            panelInfo.Controls.Add(etiquetaInfo);
+            pestana.Controls.Add(rejilla);
+            pestana.Controls.Add(panelInfo);
+            controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
-        private void CalculateNutrientSolution()
+        private void CalcularSolucionNutritiva()
         {
             try
             {
-                calculationResults = nutrientModule.CalculateSolution();
-                ionBalance = nutrientModule.CalculateIonBalance(calculationResults);
+                resultadosCalculo = moduloNutrientes.CalcularSolucion();
+                balanceIonico = moduloNutrientes.CalcularBalanceIonico(resultadosCalculo);
 
-                var grid = mainTabControl.TabPages[3].Controls.Find("NutrientCalculationsGrid", true).FirstOrDefault() as DataGridView;
-                if (grid == null) return;
+                var rejilla = controlPestanasPrincipal.TabPages[3].Controls.Find("RejillaCalculosNutrientes", true).FirstOrDefault() as DataGridView;
+                if (rejilla == null) return;
 
-                // Set up columns
-                grid.Columns.Clear();
-                var columns = new[]
+                // Configurar columnas
+                rejilla.Columns.Clear();
+                var columnas = new[]
                 {
-                    ("Fertilizer", "Fertilizer"),
-                    ("Amount", "Amount (mg/L)"),
+                    ("Fertilizante", "Fertilizante"),
+                    ("Cantidad", "Cantidad (mg/L)"),
                     ("Ca", "Ca"),
                     ("K", "K"),
                     ("Mg", "Mg"),
                     ("N", "N"),
                     ("P", "P"),
                     ("S", "S"),
-                    ("Formula", "Calculation Used")
+                    ("Formula", "Cálculo Usado")
                 };
 
-                foreach (var col in columns)
+                foreach (var col in columnas)
                 {
-                    grid.Columns.Add(col.Item1, col.Item2);
+                    rejilla.Columns.Add(col.Item1, col.Item2);
                 }
 
-                // Add calculation results
-                foreach (var result in calculationResults)
+                // Agregar resultados de cálculo
+                foreach (var resultado in resultadosCalculo)
                 {
-                    string formula = $@"P = {result.Name switch
+                    string formula = $@"P = {resultado.Nombre switch
                     {
                         "KH2PO4" => "45 × 136.1 × 100 / (30.97 × 98)",
                         "Ca(NO3)2.2H2O" => "162 × 200 × 100 / (40.08 × 95)",
                         "MgSO4.7H2O" => "45 × 246.5 × 100 / (24.31 × 98)",
                         "KNO3" => "30 × 101.1 × 100 / (14.01 × 98)",
                         "K2SO4" => "118 × 174.3 × 100 / (78.2 × 98)",
-                        _ => "Standard Formula"
+                        _ => "Fórmula Estándar"
                     }}";
 
-                    grid.Rows.Add(
-                        result.Name,
-                        result.SaltConcentration_mgL.ToString("F1"),
-                        result.Ca.ToString("F1"),
-                        result.K.ToString("F1"),
-                        result.Mg.ToString("F1"),
-                        result.N.ToString("F1"),
-                        result.P.ToString("F1"),
-                        result.S.ToString("F1"),
+                    rejilla.Rows.Add(
+                        resultado.Nombre,
+                        resultado.ConcentracionSal_mgL.ToString("F1"),
+                        resultado.Ca.ToString("F1"),
+                        resultado.K.ToString("F1"),
+                        resultado.Mg.ToString("F1"),
+                        resultado.N.ToString("F1"),
+                        resultado.P.ToString("F1"),
+                        resultado.S.ToString("F1"),
                         formula
                     );
                 }
 
-                MessageBox.Show("Nutrient calculations completed successfully!\n" +
-                              $"Total fertilizers calculated: {calculationResults.Count}",
-                              "Calculation Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("¡Cálculos de nutrientes completados con éxito!\n" +
+                              $"Total de fertilizantes calculados: {resultadosCalculo.Count}",
+                              "Cálculo Completo", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error calculating nutrient solution: {ex.Message}", "Calculation Error",
+                MessageBox.Show($"Error al calcular solución nutritiva: {ex.Message}", "Error de Cálculo",
                               MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void LoadStep5_SolutionVerification()
+        private void CargarPaso5_VerificacionSolucion()
         {
-            var tab = new TabPage("Step 5: Solution Verification");
-            mainTabControl.TabPages.Add(tab);
+            var pestana = new TabPage("Paso 5: Verificación de Solución");
+            controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
-        private void PerformVerification()
+        private void RealizarVerificacion()
         {
-            MessageBox.Show("Verification step - checking ion balance, EC, pH, and nutrient ratios",
-                          "Verification", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Paso de verificación - verificando balance iónico, CE, pH y relaciones de nutrientes",
+                          "Verificación", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void LoadStep6_ConcentratedSolutions()
+        private void CargarPaso6_SolucionesConcentradas()
         {
-            var tab = new TabPage("Step 6: Concentrated Solutions");
-            mainTabControl.TabPages.Add(tab);
+            var pestana = new TabPage("Paso 6: Soluciones Concentradas");
+            controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
-        private void CalculateConcentratedSolutions()
+        private void CalcularSolucionesConcentradas()
         {
-            MessageBox.Show("Calculating concentrated solutions with tank distribution and compatibility checks",
-                          "Concentrated Solutions", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Calculando soluciones concentradas con distribución de tanques y verificaciones de compatibilidad",
+                          "Soluciones Concentradas", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void LoadStep7_CostAnalysis()
+        private void CargarPaso7_AnalisisCostos()
         {
-            var tab = new TabPage("Step 7: Cost Analysis");
-            mainTabControl.TabPages.Add(tab);
+            var pestana = new TabPage("Paso 7: Análisis de Costos");
+            controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
-        private void PerformCostAnalysis()
+        private void RealizarAnalisisCostos()
         {
-            MessageBox.Show("Analyzing costs by fertilizer, nutrient, and tank distribution",
-                          "Cost Analysis", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Analizando costos por fertilizante, nutriente y distribución de tanques",
+                          "Análisis de Costos", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void LoadStep8_FinalReport()
+        private void CargarPaso8_ReporteFinal()
         {
-            var tab = new TabPage("Step 8: Final Report");
-            mainTabControl.TabPages.Add(tab);
+            var pestana = new TabPage("Paso 8: Reporte Final");
+            controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
-        private void GenerateFinalReport()
+        private void GenerarReporteFinal()
         {
-            MessageBox.Show("Generating comprehensive final report with all calculations and recommendations",
-                          "Final Report", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show("Generando reporte final integral con todos los cálculos y recomendaciones",
+                          "Reporte Final", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 
-    // Main program entry point
-    class Program
+    // Punto de entrada del programa principal
+    class Programa
     {
         [STAThread]
         static void Main()
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new CompleteHydroponicCalculatorForm());
+            Application.Run(new FormularioCalculadoraHidroponicaCompleta());
         }
     }
 }
