@@ -1,5 +1,14 @@
 # 🌱 Módulo 2: Calculadora de Soluciones Nutritivas
 
+## TODO
+
+[] Pasar a español
+[] Pantallas 5, 6 y 7 aparecen vacias
+[] Verificar same functionality as Main.cs
+[] Verificar con PDF
+[] Video
+
+
 ## Descripción
 
 Este módulo es parte del sistema **Ferti-riego** y se encarga de calcular las cantidades exactas de fertilizantes necesarias para alcanzar concentraciones específicas de nutrientes en soluciones hidropónicas.
