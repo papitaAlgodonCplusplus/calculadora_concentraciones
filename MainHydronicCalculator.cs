@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using CalculadoraHidroponica.Modulos;
 #pragma warning disable CS8618
@@ -175,6 +176,7 @@ namespace CalculadoraHidroponica
 
             concentracionesObjetivo = moduloNutrientes.ObtenerConcentracionesObjetivo();
         }
+
 
         private void CargarPaso1_AnalisisAgua()
         {
@@ -958,52 +960,1063 @@ namespace CalculadoraHidroponica
             }
         }
 
+        // Agregar estos métodos a la clase FormularioCalculadoraHidroponicaCompleta
+
         private void CargarPaso5_VerificacionSolucion()
         {
             var pestana = new TabPage("Paso 5: Verificación de Solución");
+            var panelPrincipal = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 2,
+                Padding = new Padding(10)
+            };
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panelPrincipal.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            panelPrincipal.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+
+            // Panel de verificación de concentraciones
+            var panelConcentraciones = new GroupBox
+            {
+                Text = "Verificación de Concentraciones",
+                Dock = DockStyle.Fill
+            };
+            var rejillaConcentraciones = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                Name = "RejillaVerificacionConcentraciones"
+            };
+            panelConcentraciones.Controls.Add(rejillaConcentraciones);
+
+            // Panel de parámetros físicos
+            var panelFisicos = new GroupBox
+            {
+                Text = "Parámetros Físicos",
+                Dock = DockStyle.Fill
+            };
+            var rejillaFisicos = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                Name = "RejillaParametrosFisicos"
+            };
+            panelFisicos.Controls.Add(rejillaFisicos);
+
+            // Panel de relaciones iónicas
+            var panelRelaciones = new GroupBox
+            {
+                Text = "Relaciones Iónicas",
+                Dock = DockStyle.Fill
+            };
+            var rejillaRelaciones = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                Name = "RejillaRelacionesIonicas"
+            };
+            panelRelaciones.Controls.Add(rejillaRelaciones);
+
+            // Panel de balance iónico
+            var panelBalance = new GroupBox
+            {
+                Text = "Balance Iónico",
+                Dock = DockStyle.Fill
+            };
+            var rejillaBalance = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                Name = "RejillaBalanceIonico"
+            };
+            panelBalance.Controls.Add(rejillaBalance);
+
+            panelPrincipal.Controls.Add(panelConcentraciones, 0, 0);
+            panelPrincipal.Controls.Add(panelFisicos, 1, 0);
+            panelPrincipal.Controls.Add(panelRelaciones, 0, 1);
+            panelPrincipal.Controls.Add(panelBalance, 1, 1);
+
+            pestana.Controls.Add(panelPrincipal);
             controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
         private void RealizarVerificacion()
         {
-            MessageBox.Show("Paso de verificación - verificando balance iónico, CE, pH y relaciones de nutrientes",
-                          "Verificación", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                if (resultadosCalculo == null || balanceIonico == null)
+                {
+                    MessageBox.Show("Primero debe completar los cálculos de nutrientes.", "Error",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Calcular concentraciones finales
+                var concentracionesFinales = new Dictionary<string, double>();
+                foreach (var resultado in resultadosCalculo)
+                {
+                    if (!concentracionesFinales.ContainsKey("N")) concentracionesFinales["N"] = 0;
+                    if (!concentracionesFinales.ContainsKey("P")) concentracionesFinales["P"] = 0;
+                    if (!concentracionesFinales.ContainsKey("K")) concentracionesFinales["K"] = 0;
+                    if (!concentracionesFinales.ContainsKey("Ca")) concentracionesFinales["Ca"] = 0;
+                    if (!concentracionesFinales.ContainsKey("Mg")) concentracionesFinales["Mg"] = 0;
+                    if (!concentracionesFinales.ContainsKey("S")) concentracionesFinales["S"] = 0;
+                    if (!concentracionesFinales.ContainsKey("Fe")) concentracionesFinales["Fe"] = 0;
+
+                    concentracionesFinales["N"] += resultado.N;
+                    concentracionesFinales["P"] += resultado.P;
+                    concentracionesFinales["K"] += resultado.K;
+                    concentracionesFinales["Ca"] += resultado.Ca;
+                    concentracionesFinales["Mg"] += resultado.Mg;
+                    concentracionesFinales["S"] += resultado.S;
+                    concentracionesFinales["Fe"] += resultado.Fe;
+                }
+
+                // Sumar aportes del agua
+                foreach (var elemento in datosAgua.Elementos_mgL)
+                {
+                    if (concentracionesFinales.ContainsKey(elemento.Key))
+                        concentracionesFinales[elemento.Key] += elemento.Value;
+                }
+
+                // Verificar concentraciones
+                var resultadosConcentraciones = moduloVerificacion.VerificarConcentracionesNutrientes(
+                    concentracionesObjetivo, concentracionesFinales);
+
+                // Calcular CE estimada
+                double ceEstimada = balanceIonico.Final_meqL.Values.Sum() * 0.1;
+
+                // Verificar parámetros físicos
+                var resultadosFisicos = moduloVerificacion.VerificarParametrosFisicos(
+                    datosAgua.pH, ceEstimada, datosAgua.Temperatura);
+
+                // Verificar relaciones iónicas
+                var resultadosRelaciones = moduloVerificacion.VerificarRelacionesIonicas(
+                    balanceIonico.Final_meqL, balanceIonico.Final_mmolL, balanceIonico.Final_mgL, "General");
+
+                // Verificar balance iónico
+                var verificacionBalance = moduloVerificacion.VerificarBalanceIonico(balanceIonico.Final_meqL);
+
+                // Mostrar resultados en las rejillas
+                MostrarResultadosVerificacion(resultadosConcentraciones, resultadosFisicos,
+                                            resultadosRelaciones, verificacionBalance);
+
+                MessageBox.Show("¡Verificación de solución completada con éxito!", "Verificación Completa",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error durante la verificación: {ex.Message}", "Error",
+                              MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void MostrarResultadosVerificacion(
+            List<ResultadoVerificacion> concentraciones,
+            List<ResultadoVerificacion> fisicos,
+            List<ResultadoRelacionIonica> relaciones,
+            Dictionary<string, double> balance)
+        {
+            // Rejilla de concentraciones
+            var rejillaConc = controlPestanasPrincipal.TabPages[4].Controls.Find("RejillaVerificacionConcentraciones", true)
+                              .FirstOrDefault() as DataGridView;
+            if (rejillaConc != null)
+            {
+                rejillaConc.Columns.Clear();
+                rejillaConc.Columns.Add("Nutriente", "Nutriente");
+                rejillaConc.Columns.Add("Objetivo", "Objetivo (mg/L)");
+                rejillaConc.Columns.Add("Real", "Real (mg/L)");
+                rejillaConc.Columns.Add("Desviacion", "Desviación (%)");
+                rejillaConc.Columns.Add("Estado", "Estado");
+
+                foreach (var resultado in concentraciones)
+                {
+                    var indice = rejillaConc.Rows.Add(
+                        resultado.Parametro,
+                        resultado.ValorObjetivo.ToString("F1"),
+                        resultado.ValorReal.ToString("F1"),
+                        resultado.PorcentajeDesviacion.ToString("F1") + "%",
+                        resultado.Estado
+                    );
+
+                    var fila = rejillaConc.Rows[indice];
+                    fila.DefaultCellStyle.BackColor = resultado.ColorEstado switch
+                    {
+                        "Verde" => Color.LightGreen,
+                        "Rojo" => Color.LightCoral,
+                        "Amarillo" => Color.LightYellow,
+                        "Naranja" => Color.Orange,
+                        _ => Color.White
+                    };
+                }
+            }
+
+            // Rejilla de parámetros físicos
+            var rejillaFis = controlPestanasPrincipal.TabPages[4].Controls.Find("RejillaParametrosFisicos", true)
+                             .FirstOrDefault() as DataGridView;
+            if (rejillaFis != null)
+            {
+                rejillaFis.Columns.Clear();
+                rejillaFis.Columns.Add("Parametro", "Parámetro");
+                rejillaFis.Columns.Add("Valor", "Valor");
+                rejillaFis.Columns.Add("Unidad", "Unidad");
+                rejillaFis.Columns.Add("Estado", "Estado");
+                rejillaFis.Columns.Add("Recomendacion", "Recomendación");
+
+                foreach (var resultado in fisicos)
+                {
+                    var indice = rejillaFis.Rows.Add(
+                        resultado.Parametro,
+                        resultado.ValorReal.ToString("F2"),
+                        resultado.Unidad,
+                        resultado.Estado,
+                        resultado.Recomendacion
+                    );
+
+                    var fila = rejillaFis.Rows[indice];
+                    fila.DefaultCellStyle.BackColor = resultado.ColorEstado switch
+                    {
+                        "Verde" => Color.LightGreen,
+                        "Rojo" => Color.LightCoral,
+                        _ => Color.White
+                    };
+                }
+            }
+
+            // Rejilla de relaciones
+            var rejillaRel = controlPestanasPrincipal.TabPages[4].Controls.Find("RejillaRelacionesIonicas", true)
+                             .FirstOrDefault() as DataGridView;
+            if (rejillaRel != null)
+            {
+                rejillaRel.Columns.Clear();
+                rejillaRel.Columns.Add("Relacion", "Relación");
+                rejillaRel.Columns.Add("Valor", "Valor");
+                rejillaRel.Columns.Add("Rango", "Rango Óptimo");
+                rejillaRel.Columns.Add("Estado", "Estado");
+
+                foreach (var relacion in relaciones)
+                {
+                    var indice = rejillaRel.Rows.Add(
+                        relacion.NombreRelacion,
+                        relacion.RelacionReal.ToString("F2"),
+                        $"{relacion.ObjetivoMinimo:F1} - {relacion.ObjetivoMaximo:F1}",
+                        relacion.Estado
+                    );
+
+                    var fila = rejillaRel.Rows[indice];
+                    fila.DefaultCellStyle.BackColor = relacion.ColorEstado switch
+                    {
+                        "Verde" => Color.LightGreen,
+                        "Naranja" => Color.Orange,
+                        _ => Color.White
+                    };
+                }
+            }
+
+            // Rejilla de balance iónico
+            var rejillaBal = controlPestanasPrincipal.TabPages[4].Controls.Find("RejillaBalanceIonico", true)
+                             .FirstOrDefault() as DataGridView;
+            if (rejillaBal != null)
+            {
+                rejillaBal.Columns.Clear();
+                rejillaBal.Columns.Add("Parametro", "Parámetro");
+                rejillaBal.Columns.Add("Valor", "Valor");
+                rejillaBal.Columns.Add("Unidad", "Unidad");
+                rejillaBal.Columns.Add("Estado", "Estado");
+
+                rejillaBal.Rows.Add("Suma Cationes", balance["SumaCationes"].ToString("F2"), "meq/L", "");
+                rejillaBal.Rows.Add("Suma Aniones", balance["SumaAniones"].ToString("F2"), "meq/L", "");
+                rejillaBal.Rows.Add("Diferencia", balance["Diferencia"].ToString("F2"), "meq/L", "");
+
+                var indiceDif = rejillaBal.Rows.Add("Diferencia %", balance["DiferenciaPorcentual"].ToString("F1") + "%", "",
+                                      balance["EstaBalanceado"] == 1 ? "Balanceado" : "Desbalanceado");
+
+                var filaDif = rejillaBal.Rows[indiceDif];
+                filaDif.DefaultCellStyle.BackColor = balance["EstaBalanceado"] == 1 ? Color.LightGreen : Color.LightCoral;
+            }
         }
 
         private void CargarPaso6_SolucionesConcentradas()
         {
             var pestana = new TabPage("Paso 6: Soluciones Concentradas");
+            var panelPrincipal = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                Padding = new Padding(10)
+            };
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
+
+            // Panel de configuración
+            var panelConfig = new GroupBox
+            {
+                Text = "Configuración de Concentración",
+                Dock = DockStyle.Fill,
+                Padding = new Padding(10)
+            };
+
+            var disenoConfig = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                AutoSize = true
+            };
+
+            // Factor de concentración
+            disenoConfig.Controls.Add(new Label { Text = "Factor de Concentración:", TextAlign = ContentAlignment.MiddleRight }, 0, 0);
+            var comboFactor = new ComboBox
+            {
+                Width = 100,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Name = "ComboFactorConcentracion"
+            };
+            comboFactor.Items.AddRange(new[] { "1:50", "1:100", "1:200" });
+            comboFactor.SelectedIndex = 1; // 1:100 por defecto
+            disenoConfig.Controls.Add(comboFactor, 1, 0);
+
+            // Número de tanques
+            disenoConfig.Controls.Add(new Label { Text = "Número de Tanques:", TextAlign = ContentAlignment.MiddleRight }, 0, 1);
+            var comboTanques = new ComboBox
+            {
+                Width = 100,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Name = "ComboNumeroTanques"
+            };
+            comboTanques.Items.AddRange(new[] { "2", "3", "4" });
+            comboTanques.SelectedIndex = 0; // 2 tanques por defecto
+            disenoConfig.Controls.Add(comboTanques, 1, 1);
+
+            // Volumen por tanque
+            disenoConfig.Controls.Add(new Label { Text = "Volumen por Tanque (L):", TextAlign = ContentAlignment.MiddleRight }, 0, 2);
+            var cajaVolumen = new TextBox { Text = "200", Width = 100, Name = "CajaVolumenTanque" };
+            disenoConfig.Controls.Add(cajaVolumen, 1, 2);
+
+            panelConfig.Controls.Add(disenoConfig);
+
+            // Panel de resultados
+            var panelResultados = new GroupBox
+            {
+                Text = "Distribución de Tanques",
+                Dock = DockStyle.Fill
+            };
+
+            var rejillaConcentrados = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                Name = "RejillaSolucionesConcentradas"
+            };
+
+            panelResultados.Controls.Add(rejillaConcentrados);
+
+            panelPrincipal.Controls.Add(panelConfig, 0, 0);
+            panelPrincipal.Controls.Add(panelResultados, 1, 0);
+
+            pestana.Controls.Add(panelPrincipal);
             controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
         private void CalcularSolucionesConcentradas()
         {
-            MessageBox.Show("Calculando soluciones concentradas con distribución de tanques y verificaciones de compatibilidad",
-                          "Soluciones Concentradas", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                if (resultadosCalculo == null)
+                {
+                    MessageBox.Show("Primero debe completar los cálculos de nutrientes.", "Error",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Obtener configuración
+                var comboFactor = controlPestanasPrincipal.TabPages[5].Controls.Find("ComboFactorConcentracion", true)
+                                  .FirstOrDefault() as ComboBox;
+                var comboTanques = controlPestanasPrincipal.TabPages[5].Controls.Find("ComboNumeroTanques", true)
+                                   .FirstOrDefault() as ComboBox;
+                var cajaVolumen = controlPestanasPrincipal.TabPages[5].Controls.Find("CajaVolumenTanque", true)
+                                  .FirstOrDefault() as TextBox;
+
+                if (comboFactor == null || comboTanques == null || cajaVolumen == null) return;
+
+                int factor = int.Parse(comboFactor.Text.Split(':')[1]);
+                int numeroTanques = int.Parse(comboTanques.Text);
+                double volumenTanque = double.Parse(cajaVolumen.Text);
+
+                // Convertir resultados a concentraciones de fertilizantes
+                var concentracionesFertilizantes = new Dictionary<string, double>();
+                foreach (var resultado in resultadosCalculo)
+                {
+                    concentracionesFertilizantes[resultado.Nombre] = resultado.ConcentracionSal_mgL;
+                }
+
+                // Obtener ácidos si existen
+                var acidos = new List<string>();
+                if (resultadosAcidos != null)
+                {
+                    acidos.AddRange(resultadosAcidos.Select(a => a.NombreAcido));
+                }
+
+                // Generar distribución
+                var tanques = moduloConcentrados.DistribuirFertilizantes(
+                    concentracionesFertilizantes, acidos, numeroTanques, factor, volumenTanque);
+
+                // Mostrar resultados
+                MostrarSolucionesConcentradas(tanques, factor);
+
+                MessageBox.Show("¡Soluciones concentradas calculadas con éxito!", "Cálculo Completo",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al calcular soluciones concentradas: {ex.Message}", "Error",
+                              MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void MostrarSolucionesConcentradas(List<DistribucionTanque> tanques, int factor)
+        {
+            var rejilla = controlPestanasPrincipal.TabPages[5].Controls.Find("RejillaSolucionesConcentradas", true)
+                          .FirstOrDefault() as DataGridView;
+            if (rejilla == null) return;
+
+            rejilla.Columns.Clear();
+            rejilla.Columns.Add("Tanque", "Tanque");
+            rejilla.Columns.Add("Fertilizantes", "Fertilizantes");
+            rejilla.Columns.Add("Concentracion", "Concentración Total (g/L)");
+            rejilla.Columns.Add("Costo", "Costo ($)");
+            rejilla.Columns.Add("Advertencias", "Advertencias");
+
+            foreach (var tanque in tanques)
+            {
+                string fertilizantes = string.Join(", ", tanque.Fertilizantes);
+                string advertencias = "";
+
+                if (tanque.AdvertenciasCompatibilidad.Any())
+                    advertencias += "⚠️ Compatibilidad ";
+                if (tanque.AdvertenciasSolubilidad.Any())
+                    advertencias += "⚠️ Solubilidad ";
+
+                var indice = rejilla.Rows.Add(
+                    tanque.EtiquetaTanque,
+                    fertilizantes,
+                    tanque.DensidadTotal_gL.ToString("F1"),
+                    tanque.CostoEstimado.ToString("F2"),
+                    advertencias
+                );
+
+                var fila = rejilla.Rows[indice];
+                if (advertencias.Contains("⚠️"))
+                    fila.DefaultCellStyle.BackColor = Color.LightYellow;
+            }
         }
 
         private void CargarPaso7_AnalisisCostos()
         {
             var pestana = new TabPage("Paso 7: Análisis de Costos");
+            var panelPrincipal = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 2,
+                Padding = new Padding(10)
+            };
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panelPrincipal.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
+            panelPrincipal.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+            panelPrincipal.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+
+            // Panel de costos por fertilizante
+            var panelFertilizantes = new GroupBox
+            {
+                Text = "Costos por Fertilizante",
+                Dock = DockStyle.Fill
+            };
+            var rejillaFertilizantes = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                Name = "RejillaCostosFertilizantes"
+            };
+            panelFertilizantes.Controls.Add(rejillaFertilizantes);
+
+            // Panel de costos por nutriente
+            var panelNutrientes = new GroupBox
+            {
+                Text = "Costos por Nutriente",
+                Dock = DockStyle.Fill
+            };
+            var rejillaNutrientes = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                Name = "RejillaCostosNutrientes"
+            };
+            panelNutrientes.Controls.Add(rejillaNutrientes);
+
+            // Panel de resumen de costos
+            var panelResumen = new GroupBox
+            {
+                Text = "Resumen de Costos",
+                Dock = DockStyle.Fill
+            };
+            var rejillaResumen = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                Name = "RejillaResumenCostos"
+            };
+            panelResumen.Controls.Add(rejillaResumen);
+
+            // Panel de configuración de área
+            var panelConfigArea = new GroupBox
+            {
+                Text = "Configuración de Área",
+                Dock = DockStyle.Fill,
+                Padding = new Padding(10)
+            };
+
+            var disenoArea = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                AutoSize = true
+            };
+
+            disenoArea.Controls.Add(new Label { Text = "Área Total (m²):", TextAlign = ContentAlignment.MiddleRight }, 0, 0);
+            var cajaArea = new TextBox { Text = "100", Width = 100, Name = "CajaAreaTotal" };
+            disenoArea.Controls.Add(cajaArea, 1, 0);
+
+            disenoArea.Controls.Add(new Label { Text = "Aplicaciones/Año:", TextAlign = ContentAlignment.MiddleRight }, 0, 1);
+            var cajaAplicaciones = new TextBox { Text = "365", Width = 100, Name = "CajaAplicacionesAno" };
+            disenoArea.Controls.Add(cajaAplicaciones, 1, 1);
+
+            panelConfigArea.Controls.Add(disenoArea);
+
+            panelPrincipal.Controls.Add(panelFertilizantes, 0, 0);
+            panelPrincipal.Controls.Add(panelNutrientes, 1, 0);
+            panelPrincipal.Controls.Add(panelResumen, 0, 1);
+            panelPrincipal.Controls.Add(panelConfigArea, 1, 1);
+
+            pestana.Controls.Add(panelPrincipal);
             controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
         private void RealizarAnalisisCostos()
         {
-            MessageBox.Show("Analizando costos por fertilizante, nutriente y distribución de tanques",
-                          "Análisis de Costos", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                if (resultadosCalculo == null)
+                {
+                    MessageBox.Show("Primero debe completar los cálculos de nutrientes.", "Error",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // Obtener configuración de área
+                var cajaArea = controlPestanasPrincipal.TabPages[6].Controls.Find("CajaAreaTotal", true)
+                               .FirstOrDefault() as TextBox;
+                var cajaAplicaciones = controlPestanasPrincipal.TabPages[6].Controls.Find("CajaAplicacionesAno", true)
+                                       .FirstOrDefault() as TextBox;
+
+                double areaTotal = double.Parse(cajaArea?.Text ?? "100");
+                double aplicacionesAno = double.Parse(cajaAplicaciones?.Text ?? "365");
+
+                // Calcular cantidades de fertilizantes por 1000L
+                var cantidadesFertilizantes = new Dictionary<string, double>();
+                foreach (var resultado in resultadosCalculo)
+                {
+                    cantidadesFertilizantes[resultado.Nombre] = resultado.ConcentracionSal_mgL / 1000.0; // kg por 1000L
+                }
+
+                // Calcular análisis de costos
+                var analisisCostos = moduloCostos.CalcularCostoSolucion(
+                    cantidadesFertilizantes, 1000, 1000, 1); // 1000L concentrado = 1000L diluido (factor 1:1)
+
+                // Calcular costos por nutriente
+                var costosNutrientes = moduloCostos.AnalizarCostosNutrientes(concentracionesObjetivo, 1000);
+
+                // Generar reporte completo
+                var reporteCostos = moduloCostos.GenerarReporteCostos(
+                    analisisCostos, costosNutrientes, areaTotal, aplicacionesAno);
+
+                // Mostrar resultados
+                MostrarAnalisisCostos(analisisCostos, costosNutrientes, reporteCostos);
+
+                MessageBox.Show("¡Análisis de costos completado con éxito!", "Análisis Completo",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error durante el análisis de costos: {ex.Message}", "Error",
+                              MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void MostrarAnalisisCostos(
+            AnalisisCostoSolucion analisisCostos,
+            Dictionary<string, CostoNutriente> costosNutrientes,
+            Dictionary<string, object> reporteCostos)
+        {
+            // Rejilla de costos por fertilizante
+            var rejillaFert = controlPestanasPrincipal.TabPages[6].Controls.Find("RejillaCostosFertilizantes", true)
+                              .FirstOrDefault() as DataGridView;
+            if (rejillaFert != null)
+            {
+                rejillaFert.Columns.Clear();
+                rejillaFert.Columns.Add("Fertilizante", "Fertilizante");
+                rejillaFert.Columns.Add("Costo", "Costo ($)");
+                rejillaFert.Columns.Add("Porcentaje", "% del Total");
+
+                foreach (var costo in analisisCostos.CostoPorFertilizante.OrderByDescending(c => c.Value))
+                {
+                    double porcentaje = analisisCostos.PorcentajePorFertilizante.GetValueOrDefault(costo.Key, 0);
+                    rejillaFert.Rows.Add(costo.Key, costo.Value.ToString("F3"), porcentaje.ToString("F1") + "%");
+                }
+            }
+
+            // Rejilla de costos por nutriente
+            var rejillaNut = controlPestanasPrincipal.TabPages[6].Controls.Find("RejillaCostosNutrientes", true)
+                             .FirstOrDefault() as DataGridView;
+            if (rejillaNut != null)
+            {
+                rejillaNut.Columns.Clear();
+                rejillaNut.Columns.Add("Nutriente", "Nutriente");
+                rejillaNut.Columns.Add("CostoPorKg", "Costo/kg ($)");
+                rejillaNut.Columns.Add("CostoTotal", "Costo Total ($)");
+                rejillaNut.Columns.Add("FuenteBarata", "Fuente Más Barata");
+
+                foreach (var nutriente in costosNutrientes.OrderByDescending(n => n.Value.CostoTotal))
+                {
+                    rejillaNut.Rows.Add(
+                        nutriente.Key,
+                        nutriente.Value.CostoPorKg_Nutriente.ToString("F2"),
+                        nutriente.Value.CostoTotal.ToString("F3"),
+                        nutriente.Value.FuenteMasBarata
+                    );
+                }
+            }
+
+            // Rejilla de resumen
+            var rejillaRes = controlPestanasPrincipal.TabPages[6].Controls.Find("RejillaResumenCostos", true)
+                             .FirstOrDefault() as DataGridView;
+            if (rejillaRes != null)
+            {
+                rejillaRes.Columns.Clear();
+                rejillaRes.Columns.Add("Concepto", "Concepto");
+                rejillaRes.Columns.Add("Valor", "Valor");
+                rejillaRes.Columns.Add("Unidad", "Unidad");
+
+                rejillaRes.Rows.Add("Costo por Aplicación", reporteCostos["CostoTotal_PorAplicacion"].ToString(), "$");
+                rejillaRes.Rows.Add("Costo por m³", reporteCostos["CostoPorM3_Diluida"].ToString(), "$/m³");
+                rejillaRes.Rows.Add("Costo por m² por Aplicación", reporteCostos["CostoPorM2_PorAplicacion"].ToString(), "$/m²");
+                rejillaRes.Rows.Add("Costo Anual Total", reporteCostos["CostoAnual_Total"].ToString(), "$");
+                rejillaRes.Rows.Add("Costo Anual por m²", reporteCostos["CostoAnual_PorM2"].ToString(), "$/m²/año");
+            }
         }
 
         private void CargarPaso8_ReporteFinal()
         {
             var pestana = new TabPage("Paso 8: Reporte Final");
+            var panelPrincipal = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 1,
+                RowCount = 2,
+                Padding = new Padding(10)
+            };
+            panelPrincipal.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            panelPrincipal.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            // Panel de botones de exportación
+            var panelBotones = new Panel
+            {
+                Height = 60,
+                Dock = DockStyle.Top,
+                Padding = new Padding(10)
+            };
+
+            var botonGenerarReporte = new Button
+            {
+                Text = "Generar Reporte Completo",
+                Size = new Size(180, 35),
+                Location = new Point(10, 10),
+                BackColor = Color.LightGreen
+            };
+            botonGenerarReporte.Click += (s, e) => GenerarReporteFinal();
+
+            var botonExportarExcel = new Button
+            {
+                Text = "Exportar a Excel",
+                Size = new Size(120, 35),
+                Location = new Point(200, 10),
+                BackColor = Color.LightBlue
+            };
+            botonExportarExcel.Click += (s, e) => ExportarAExcel();
+
+            var botonGuardarPDF = new Button
+            {
+                Text = "Guardar PDF",
+                Size = new Size(120, 35),
+                Location = new Point(330, 10),
+                BackColor = Color.LightCoral
+            };
+            botonGuardarPDF.Click += (s, e) => GuardarPDF();
+
+            panelBotones.Controls.AddRange(new Control[] { botonGenerarReporte, botonExportarExcel, botonGuardarPDF });
+
+            // Panel de reporte
+            var panelReporte = new GroupBox
+            {
+                Text = "Reporte Final Integral",
+                Dock = DockStyle.Fill,
+                Padding = new Padding(10)
+            };
+
+            var cajaTextoReporte = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Consolas", 9F),
+                ReadOnly = true,
+                Name = "CajaTextoReporte"
+            };
+
+            panelReporte.Controls.Add(cajaTextoReporte);
+
+            panelPrincipal.Controls.Add(panelBotones, 0, 0);
+            panelPrincipal.Controls.Add(panelReporte, 0, 1);
+
+            pestana.Controls.Add(panelPrincipal);
             controlPestanasPrincipal.TabPages.Add(pestana);
         }
 
         private void GenerarReporteFinal()
         {
-            MessageBox.Show("Generando reporte final integral con todos los cálculos y recomendaciones",
-                          "Reporte Final", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                var cajaReporte = controlPestanasPrincipal.TabPages[7].Controls.Find("CajaTextoReporte", true)
+                                  .FirstOrDefault() as RichTextBox;
+                if (cajaReporte == null) return;
+
+                var reporte = new StringBuilder();
+
+                // Encabezado
+                reporte.AppendLine("╔══════════════════════════════════════════════════════════════════════════════╗");
+                reporte.AppendLine("║              REPORTE INTEGRAL DE SOLUCIÓN NUTRITIVA HIDROPÓNICA              ║");
+                reporte.AppendLine("╚══════════════════════════════════════════════════════════════════════════════╝");
+                reporte.AppendLine();
+                reporte.AppendLine($"Fecha de Generación: {DateTime.Now:dd/MM/yyyy HH:mm}");
+                reporte.AppendLine($"Software: Calculadora Hidropónica Profesional v1.0");
+                reporte.AppendLine();
+
+                // Resumen ejecutivo
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                                RESUMEN EJECUTIVO");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+
+                if (resultadosCalculo != null)
+                {
+                    reporte.AppendLine($"• Total de fertilizantes calculados: {resultadosCalculo.Count}");
+                    reporte.AppendLine($"• Concentración total de sales: {resultadosCalculo.Sum(r => r.ConcentracionSal_mgL):F1} mg/L");
+                }
+
+                if (balanceIonico != null)
+                {
+                    var verificacionBalance = moduloVerificacion?.VerificarBalanceIonico(balanceIonico.Final_meqL);
+                    if (verificacionBalance != null)
+                    {
+                        reporte.AppendLine($"• Balance iónico: {(verificacionBalance["EstaBalanceado"] == 1 ? "✓ Balanceado" : "✗ Desbalanceado")} " +
+                                         $"({verificacionBalance["DiferenciaPorcentual"]:F1}% diferencia)");
+                    }
+                }
+
+                reporte.AppendLine();
+
+                // 1. Análisis de agua
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                            1. ANÁLISIS DE AGUA");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+
+                if (datosAgua != null)
+                {
+                    reporte.AppendLine("Parámetros del Agua:");
+                    reporte.AppendLine($"  • pH: {datosAgua.pH:F1}");
+                    reporte.AppendLine($"  • CE: {datosAgua.CE:F1} dS/m");
+                    reporte.AppendLine($"  • HCO3-: {datosAgua.HCO3:F1} mg/L");
+                    reporte.AppendLine();
+
+                    reporte.AppendLine("Elementos en el Agua (mg/L):");
+                    foreach (var elemento in datosAgua.Elementos_mgL.OrderBy(e => e.Key))
+                    {
+                        reporte.AppendLine($"  • {elemento.Key}: {elemento.Value:F1}");
+                    }
+                }
+
+                reporte.AppendLine();
+
+                // 2. Concentraciones objetivo
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                        2. CONCENTRACIONES OBJETIVO");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+
+                if (concentracionesObjetivo != null)
+                {
+                    reporte.AppendLine("Macronutrientes (mg/L):");
+                    var macros = new[] { "N", "P", "K", "Ca", "Mg", "S" };
+                    foreach (var macro in macros)
+                    {
+                        if (concentracionesObjetivo.ContainsKey(macro))
+                            reporte.AppendLine($"  • {macro}: {concentracionesObjetivo[macro]:F1}");
+                    }
+                }
+
+                reporte.AppendLine();
+
+                // 3. Ajuste de pH
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                            3. AJUSTE DE pH");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+
+                if (resultadosAcidos != null && resultadosAcidos.Any())
+                {
+                    reporte.AppendLine("Requerimientos de Ácido:");
+                    foreach (var acido in resultadosAcidos)
+                    {
+                        reporte.AppendLine($"  • {acido.NombreAcido}: {acido.VolumenAcido_mlL:F3} mL/L");
+                        reporte.AppendLine($"    - Contribución de {acido.TipoNutriente}: {acido.ContribucionNutriente_mgL:F1} mg/L");
+                        reporte.AppendLine($"    - Bicarbonatos a neutralizar: {acido.BicarbonatosANeutralizar:F1} mg/L");
+                    }
+                }
+                else
+                {
+                    reporte.AppendLine("No se requiere ajuste de pH.");
+                }
+
+                reporte.AppendLine();
+
+                // 4. Cálculos de fertilizantes
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                        4. CÁLCULOS DE FERTILIZANTES");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+
+                if (resultadosCalculo != null)
+                {
+                    reporte.AppendLine("Fertilizantes Requeridos (mg/L):");
+                    reporte.AppendLine();
+                    foreach (var resultado in resultadosCalculo.OrderByDescending(r => r.ConcentracionSal_mgL))
+                    {
+                        reporte.AppendLine($"  {resultado.Nombre}: {resultado.ConcentracionSal_mgL:F1} mg/L");
+                        reporte.AppendLine($"    Contribuciones de nutrientes:");
+                        if (resultado.N > 0) reporte.AppendLine($"      - N: {resultado.N:F1} mg/L");
+                        if (resultado.P > 0) reporte.AppendLine($"      - P: {resultado.P:F1} mg/L");
+                        if (resultado.K > 0) reporte.AppendLine($"      - K: {resultado.K:F1} mg/L");
+                        if (resultado.Ca > 0) reporte.AppendLine($"      - Ca: {resultado.Ca:F1} mg/L");
+                        if (resultado.Mg > 0) reporte.AppendLine($"      - Mg: {resultado.Mg:F1} mg/L");
+                        if (resultado.S > 0) reporte.AppendLine($"      - S: {resultado.S:F1} mg/L");
+                        if (resultado.Fe > 0) reporte.AppendLine($"      - Fe: {resultado.Fe:F2} mg/L");
+                        reporte.AppendLine();
+                    }
+                }
+
+                // 5. Balance iónico
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                            5. BALANCE IÓNICO");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+
+                if (balanceIonico != null)
+                {
+                    reporte.AppendLine("Concentraciones Finales (mg/L):");
+                    var elementosBalance = new[] { "N", "P", "K", "Ca", "Mg", "S" };
+                    foreach (var elemento in elementosBalance)
+                    {
+                        if (balanceIonico.Final_mgL.ContainsKey(elemento))
+                        {
+                            double objetivo = concentracionesObjetivo?.GetValueOrDefault(elemento, 0) ?? 0;
+                            double final = balanceIonico.Final_mgL[elemento];
+                            double desviacion = objetivo > 0 ? ((final - objetivo) / objetivo) * 100 : 0;
+
+                            reporte.AppendLine($"  • {elemento}: {final:F1} mg/L (Objetivo: {objetivo:F1}, Desviación: {desviacion:F1}%)");
+                        }
+                    }
+
+                    reporte.AppendLine();
+                    reporte.AppendLine("Balance Cationes vs Aniones (meq/L):");
+                    double sumaCationes = 0, sumaAniones = 0;
+
+                    var cationes = new[] { "Ca", "K", "Mg", "Na", "NH4" };
+                    var aniones = new[] { "NO3", "SO4", "Cl", "H2PO4", "HCO3" };
+
+                    foreach (var cation in cationes)
+                    {
+                        if (balanceIonico.Final_meqL.ContainsKey(cation))
+                            sumaCationes += balanceIonico.Final_meqL[cation];
+                    }
+
+                    foreach (var anion in aniones)
+                    {
+                        if (balanceIonico.Final_meqL.ContainsKey(anion))
+                            sumaAniones += balanceIonico.Final_meqL[anion];
+                    }
+
+                    reporte.AppendLine($"  • Suma de cationes: {sumaCationes:F2} meq/L");
+                    reporte.AppendLine($"  • Suma de aniones: {sumaAniones:F2} meq/L");
+                    reporte.AppendLine($"  • Diferencia: {Math.Abs(sumaCationes - sumaAniones):F2} meq/L");
+
+                    double diferenciaPorcentual = sumaCationes > 0 ? (Math.Abs(sumaCationes - sumaAniones) / sumaCationes) * 100 : 0;
+                    reporte.AppendLine($"  • Diferencia porcentual: {diferenciaPorcentual:F1}%");
+                    reporte.AppendLine($"  • Estado: {(diferenciaPorcentual <= 10 ? "✓ Balanceado" : "✗ Desbalanceado")}");
+                }
+
+                reporte.AppendLine();
+
+                // 6. Instrucciones de preparación
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                        6. INSTRUCCIONES DE PREPARACIÓN");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+
+                reporte.AppendLine("Para preparar 1000 litros de solución nutritiva:");
+                reporte.AppendLine();
+                reporte.AppendLine("1. Llenar el tanque con 800L de agua limpia");
+                reporte.AppendLine("2. Iniciar el sistema de circulación/mezclado");
+                reporte.AppendLine("3. Agregar fertilizantes en el siguiente orden:");
+                reporte.AppendLine();
+
+                if (resultadosCalculo != null)
+                {
+                    int paso = 1;
+                    foreach (var resultado in resultadosCalculo.OrderBy(r => r.Nombre))
+                    {
+                        double cantidadPor1000L = resultado.ConcentracionSal_mgL; // mg/L
+                        double cantidadKg = cantidadPor1000L / 1000.0; // Convertir a kg
+
+                        reporte.AppendLine($"   {paso}. {resultado.Nombre}: {cantidadKg:F3} kg ({cantidadPor1000L:F1} mg/L)");
+                        reporte.AppendLine($"      Esperar disolución completa antes de la siguiente adición");
+                        paso++;
+                    }
+                }
+
+                if (resultadosAcidos != null && resultadosAcidos.Any())
+                {
+                    reporte.AppendLine();
+                    reporte.AppendLine("4. Agregar ácidos (SIEMPRE ácido al agua, nunca al revés):");
+                    foreach (var acido in resultadosAcidos)
+                    {
+                        double volumenPor1000L = acido.VolumenAcido_mlL * 1000; // mL por 1000L
+                        reporte.AppendLine($"   • {acido.NombreAcido}: {volumenPor1000L:F1} mL");
+                    }
+                }
+
+                reporte.AppendLine();
+                reporte.AppendLine("5. Completar el volumen a 1000L");
+                reporte.AppendLine("6. Verificar pH final (objetivo: 5.8-6.2)");
+                reporte.AppendLine("7. Verificar CE final (objetivo: 1.8-2.5 dS/m)");
+                reporte.AppendLine();
+
+                // 7. Medidas de seguridad
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                           7. MEDIDAS DE SEGURIDAD");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+
+                reporte.AppendLine("IMPORTANTE - Equipos de Protección Personal (EPP):");
+                reporte.AppendLine("  • Gafas de seguridad");
+                reporte.AppendLine("  • Guantes de nitrilo resistentes a químicos");
+                reporte.AppendLine("  • Delantal o ropa protectora");
+                reporte.AppendLine("  • Mascarilla para polvo (al manejar fertilizantes secos)");
+                reporte.AppendLine();
+
+                reporte.AppendLine("Precauciones durante la preparación:");
+                reporte.AppendLine("  • Asegurar ventilación adecuada del área de trabajo");
+                reporte.AppendLine("  • Mantener agua limpia disponible para lavado de emergencia");
+                reporte.AppendLine("  • No comer, beber o fumar durante la preparación");
+                reporte.AppendLine("  • Agregar fertilizantes lentamente mientras se mezcla");
+                reporte.AppendLine("  • Al usar ácidos: SIEMPRE agregar ácido al agua, NUNCA agua al ácido");
+                reporte.AppendLine("  • Lavar manos y equipo después del uso");
+                reporte.AppendLine();
+
+                // Pie de página
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine("                                 FIN DEL REPORTE");
+                reporte.AppendLine("═══════════════════════════════════════════════════════════════════════════════");
+                reporte.AppendLine();
+                reporte.AppendLine("Este reporte ha sido generado automáticamente por el software de cálculo");
+                reporte.AppendLine("de soluciones nutritivas hidropónicas. Verificar siempre los resultados");
+                reporte.AppendLine("antes de la aplicación práctica.");
+
+                cajaReporte.Text = reporte.ToString();
+
+                MessageBox.Show("¡Reporte final generado con éxito!", "Reporte Completo",
+                              MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al generar el reporte final: {ex.Message}", "Error",
+                              MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void ExportarAExcel()
+        {
+            MessageBox.Show("Funcionalidad de exportación a Excel estará disponible en la próxima versión.",
+                          "Exportar Excel", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void GuardarPDF()
+        {
+            try
+            {
+                var cajaReporte = controlPestanasPrincipal.TabPages[7].Controls.Find("CajaTextoReporte", true)
+                                  .FirstOrDefault() as RichTextBox;
+                if (cajaReporte == null || string.IsNullOrEmpty(cajaReporte.Text))
+                {
+                    MessageBox.Show("Primero debe generar el reporte final.", "Error",
+                                  MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                var saveDialog = new SaveFileDialog
+                {
+                    Filter = "Archivos de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*",
+                    DefaultExt = "txt",
+                    FileName = $"Reporte_Hidroponico_{DateTime.Now:yyyyMMdd_HHmm}.txt"
+                };
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    System.IO.File.WriteAllText(saveDialog.FileName, cajaReporte.Text, System.Text.Encoding.UTF8);
+                    MessageBox.Show($"Reporte guardado exitosamente en:\n{saveDialog.FileName}",
+                                  "Guardado Exitoso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar el archivo: {ex.Message}", "Error de Guardado",
+                              MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 

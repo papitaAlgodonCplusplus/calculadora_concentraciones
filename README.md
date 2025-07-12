@@ -2,9 +2,6 @@
 
 ## TODO
 
-[] Pasar a español
-[] Pantallas 5, 6 y 7 aparecen vacias
-[] Verificar same functionality as Main.cs
 [] Verificar con PDF
 [] Video
 
